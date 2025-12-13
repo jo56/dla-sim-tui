@@ -10,6 +10,21 @@ use ratatui::{
 
 const SIDEBAR_WIDTH: u16 = 22;
 
+// UI color scheme
+const BORDER_COLOR: Color = Color::Cyan;
+const HIGHLIGHT_COLOR: Color = Color::Yellow;
+const TEXT_COLOR: Color = Color::White;
+const DIM_TEXT_COLOR: Color = Color::Gray;
+
+/// Creates a standard styled block with rounded borders
+fn styled_block(title: &str) -> Block<'_> {
+    Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(BORDER_COLOR))
+        .title(title)
+}
+
 /// Main render function
 pub fn render(frame: &mut Frame, app: &App) {
     let area = frame.area();
@@ -58,11 +73,7 @@ fn render_sidebar(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Cyan))
-        .title(" DLA Simulator ");
+    let block = styled_block(" DLA Simulator ");
 
     let progress = app.simulation.progress();
     let progress_width = (area.width.saturating_sub(4)) as usize;
@@ -78,18 +89,18 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
     };
 
     let status_color = if app.simulation.paused {
-        Color::Yellow
+        HIGHLIGHT_COLOR
     } else if app.simulation.is_complete() {
         Color::Green
     } else {
-        Color::Cyan
+        BORDER_COLOR
     };
 
     let content = vec![
         Line::from(vec![
             Span::styled(
                 format!("{} / {}", app.simulation.particles_stuck, app.simulation.num_particles),
-                Style::default().fg(Color::White),
+                Style::default().fg(TEXT_COLOR),
             ),
         ]),
         Line::from(vec![
@@ -104,18 +115,14 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Cyan))
-        .title(" Parameters ");
+    let block = styled_block(" Parameters ");
 
     let make_line = |label: &str, value: String, focused: bool| {
         let prefix = if focused { "> " } else { "  " };
         let style = if focused {
-            Style::default().fg(Color::Yellow)
+            Style::default().fg(HIGHLIGHT_COLOR)
         } else {
-            Style::default().fg(Color::White)
+            Style::default().fg(TEXT_COLOR)
         };
         Line::from(Span::styled(format!("{}{}: {}", prefix, label, value), style))
     };
@@ -148,7 +155,7 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
         ),
         Line::from(Span::styled(
             format!("  Age Color: {}", if app.color_by_age { "ON" } else { "OFF" }),
-            Style::default().fg(Color::Gray),
+            Style::default().fg(DIM_TEXT_COLOR),
         )),
     ];
 
@@ -157,14 +164,10 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Cyan))
-        .title(" Controls ");
+    let block = styled_block(" Controls ");
 
-    let key_style = Style::default().fg(Color::Yellow);
-    let desc_style = Style::default().fg(Color::Gray);
+    let key_style = Style::default().fg(HIGHLIGHT_COLOR);
+    let desc_style = Style::default().fg(DIM_TEXT_COLOR);
 
     let make_control = |key: &str, desc: &str| {
         Line::from(vec![
@@ -192,7 +195,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         content.push(Line::from(""));
         content.push(Line::from(Span::styled(
             format!("Editing: {:?}", app.focus),
-            Style::default().fg(Color::Yellow),
+            Style::default().fg(HIGHLIGHT_COLOR),
         )));
     }
 
@@ -203,10 +206,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Cyan));
+    let block = styled_block("");
 
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -255,31 +255,32 @@ fn render_help_overlay(frame: &mut Frame, area: Rect) {
     // Clear the background
     frame.render_widget(Clear, help_area);
 
+    // Help overlay uses distinct styling (Double border, Yellow) to stand out
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Double)
-        .border_style(Style::default().fg(Color::Yellow))
+        .border_style(Style::default().fg(HIGHLIGHT_COLOR))
         .title(" Help - Press H or ? to close ");
 
     let content = vec![
         Line::from(""),
-        Line::from(Span::styled("DIFFUSION-LIMITED AGGREGATION", Style::default().fg(Color::Cyan))),
+        Line::from(Span::styled("DIFFUSION-LIMITED AGGREGATION", Style::default().fg(BORDER_COLOR))),
         Line::from(""),
         Line::from("DLA simulates particles randomly walking"),
         Line::from("until they stick to a growing structure,"),
         Line::from("creating fractal snowflake-like patterns."),
         Line::from(""),
-        Line::from(Span::styled("PARAMETERS:", Style::default().fg(Color::Yellow))),
+        Line::from(Span::styled("PARAMETERS:", Style::default().fg(HIGHLIGHT_COLOR))),
         Line::from("  Stickiness: Chance to stick (0.1-1.0)"),
         Line::from("  Lower = more dendritic branches"),
         Line::from(""),
-        Line::from(Span::styled("SEED PATTERNS:", Style::default().fg(Color::Yellow))),
+        Line::from(Span::styled("SEED PATTERNS:", Style::default().fg(HIGHLIGHT_COLOR))),
         Line::from("  1=Point    2=Line     3=Cross    4=Circle"),
         Line::from("  5=Ring     6=Block    7=Multi    8=Starburst"),
         Line::from("  9=Noise    0=Scatter"),
         Line::from(""),
-        Line::from(Span::styled("Use Tab to select parameter,", Style::default().fg(Color::Gray))),
-        Line::from(Span::styled("then ↑/↓ to adjust value.", Style::default().fg(Color::Gray))),
+        Line::from(Span::styled("Use Tab to select parameter,", Style::default().fg(DIM_TEXT_COLOR))),
+        Line::from(Span::styled("then ↑/↓ to adjust value.", Style::default().fg(DIM_TEXT_COLOR))),
     ];
 
     let paragraph = Paragraph::new(content)
