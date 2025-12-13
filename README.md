@@ -27,7 +27,7 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/dla-sim-tui.git
+git clone https://github.com/jo56/dla-sim-tui.git
 cd dla-sim-tui
 
 # Build and run
