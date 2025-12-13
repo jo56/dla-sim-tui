@@ -62,7 +62,7 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(Color::Cyan))
-        .title(" DLA Simulation ");
+        .title(" DLA Simulator ");
 
     let progress = app.simulation.progress();
     let progress_width = (area.width.saturating_sub(4)) as usize;
