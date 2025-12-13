@@ -28,7 +28,7 @@ struct Args {
     #[arg(short = 's', long, default_value = "1.0")]
     stickiness: f32,
 
-    /// Initial seed pattern (point, line, cross, circle, diamond, square, spiral, scatter, multipoint, xshape)
+    /// Initial seed pattern (point, line, cross, circle, ring, block, noise, scatter, multipoint, starburst)
     #[arg(long, default_value = "point")]
     seed: String,
 
@@ -45,12 +45,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "line" => SeedPattern::Line,
         "cross" => SeedPattern::Cross,
         "circle" => SeedPattern::Circle,
-        "diamond" => SeedPattern::Diamond,
-        "square" => SeedPattern::Square,
-        "spiral" => SeedPattern::Spiral,
+        "ring" => SeedPattern::Ring,
+        "block" | "filled" => SeedPattern::Block,
+        "noise" | "noise-patch" => SeedPattern::NoisePatch,
         "scatter" => SeedPattern::Scatter,
         "multipoint" | "multi-point" => SeedPattern::MultiPoint,
-        "xshape" | "x-shape" | "x" => SeedPattern::XShape,
+        "starburst" | "spokes" | "star" => SeedPattern::Starburst,
         _ => SeedPattern::Point,
     };
 
@@ -128,11 +128,11 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Char('2') => app.set_seed_pattern(SeedPattern::Line),
                         KeyCode::Char('3') => app.set_seed_pattern(SeedPattern::Cross),
                         KeyCode::Char('4') => app.set_seed_pattern(SeedPattern::Circle),
-                        KeyCode::Char('5') => app.set_seed_pattern(SeedPattern::Diamond),
-                        KeyCode::Char('6') => app.set_seed_pattern(SeedPattern::Square),
+                        KeyCode::Char('5') => app.set_seed_pattern(SeedPattern::Ring),
+                        KeyCode::Char('6') => app.set_seed_pattern(SeedPattern::Block),
                         KeyCode::Char('7') => app.set_seed_pattern(SeedPattern::MultiPoint),
-                        KeyCode::Char('8') => app.set_seed_pattern(SeedPattern::XShape),
-                        KeyCode::Char('9') => app.set_seed_pattern(SeedPattern::Spiral),
+                        KeyCode::Char('8') => app.set_seed_pattern(SeedPattern::Starburst),
+                        KeyCode::Char('9') => app.set_seed_pattern(SeedPattern::NoisePatch),
                         KeyCode::Char('0') => app.set_seed_pattern(SeedPattern::Scatter),
                         KeyCode::Char('c') | KeyCode::Char('C') => app.cycle_color_scheme(),
                         KeyCode::Char('a') | KeyCode::Char('A') => app.toggle_color_by_age(),

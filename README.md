@@ -18,7 +18,7 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 - **High-resolution Braille rendering** - Each terminal character displays a 2x4 dot pattern
 - **Real-time simulation** - Watch the fractal structure grow
 - **Interactive controls** - Adjust parameters while running
-- **Multiple seed patterns** - Point, Line, Cross, Circle
+- **Multiple seed patterns** - Points, lines, rings, blocks, spokes, scatter/noise blobs and more
 - **8 color schemes** - Ice, Fire, Plasma, Viridis, Rainbow, Grayscale, Ocean, Neon
 - **Speed control** - Adjust simulation steps per frame
 - **Fullscreen mode** - Hide sidebar for maximum canvas size
@@ -58,7 +58,7 @@ cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 1
 |--------|-------------|---------|
 | `-p, --particles` | Number of particles (100-10000) | 5000 |
 | `-s, --stickiness` | Adhesion probability (0.1-1.0) | 1.0 |
-| `--seed` | Seed pattern (point, line, cross, circle) | point |
+| `--seed` | Seed pattern (point, line, cross, circle, ring, block, noise, scatter, multipoint, starburst) | point |
 | `--speed` | Steps per frame (1-20) | 5 |
 
 ## Controls
@@ -67,7 +67,7 @@ cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 1
 |-----|--------|
 | `Space` | Pause/Resume simulation |
 | `R` | Reset simulation |
-| `1-4` | Quick select seed pattern |
+| `1-0` | Quick select seed pattern |
 | `C` | Cycle color scheme |
 | `A` | Toggle color-by-age |
 | `Tab` | Next parameter focus |
@@ -90,6 +90,12 @@ Controls the probability that a particle will stick when it touches the structur
 - **Line**: Horizontal line - creates symmetrical branching
 - **Cross**: Cross pattern - four-way growth
 - **Circle**: Ring of particles - inward/outward growth
+- **Ring**: Thick rim with hollow core - promotes outside-in branching
+- **Block**: Solid square - shows surface roughening instead of long dendrites
+- **Multi-Point**: Competing centers to collide and merge
+- **Starburst**: Radial spokes tied by a rim for strong anisotropy
+- **Noise Patch**: Dense noisy blob offset from center for asymmetric drift
+- **Scatter**: Randomized small seeds near center (10-point shortcut seeds above are 1=Point, 2=Line, 3=Cross, 4=Circle, 5=Ring, 6=Block, 7=Multi-Point, 8=Starburst, 9=Noise Patch, 0=Scatter)
 
 ## Dependencies
 

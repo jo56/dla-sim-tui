@@ -124,7 +124,7 @@ impl App {
         self.simulation.reset();
     }
 
-    /// Set seed pattern directly (1-4 keys)
+    /// Set seed pattern directly (1-0 keys)
     pub fn set_seed_pattern(&mut self, pattern: SeedPattern) {
         self.simulation.reset_with_seed(pattern);
     }

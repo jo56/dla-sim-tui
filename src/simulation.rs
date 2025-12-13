@@ -8,12 +8,12 @@ pub enum SeedPattern {
     Line,
     Cross,
     Circle,
-    Diamond,
-    Square,
-    Spiral,
+    Ring,
+    Block,
+    NoisePatch,
     Scatter,
     MultiPoint,
-    XShape,
+    Starburst,
 }
 
 impl SeedPattern {
@@ -23,12 +23,12 @@ impl SeedPattern {
             SeedPattern::Line => "Line",
             SeedPattern::Cross => "Cross",
             SeedPattern::Circle => "Circle",
-            SeedPattern::Diamond => "Diamond",
-            SeedPattern::Square => "Square",
-            SeedPattern::Spiral => "Spiral",
+            SeedPattern::Ring => "Ring",
+            SeedPattern::Block => "Block",
+            SeedPattern::NoisePatch => "Noise Patch",
             SeedPattern::Scatter => "Scatter",
             SeedPattern::MultiPoint => "Multi-Point",
-            SeedPattern::XShape => "X-Shape",
+            SeedPattern::Starburst => "Starburst",
         }
     }
 
@@ -37,28 +37,28 @@ impl SeedPattern {
             SeedPattern::Point => SeedPattern::Line,
             SeedPattern::Line => SeedPattern::Cross,
             SeedPattern::Cross => SeedPattern::Circle,
-            SeedPattern::Circle => SeedPattern::Diamond,
-            SeedPattern::Diamond => SeedPattern::Square,
-            SeedPattern::Square => SeedPattern::Spiral,
-            SeedPattern::Spiral => SeedPattern::Scatter,
+            SeedPattern::Circle => SeedPattern::Ring,
+            SeedPattern::Ring => SeedPattern::Block,
+            SeedPattern::Block => SeedPattern::NoisePatch,
+            SeedPattern::NoisePatch => SeedPattern::Scatter,
             SeedPattern::Scatter => SeedPattern::MultiPoint,
-            SeedPattern::MultiPoint => SeedPattern::XShape,
-            SeedPattern::XShape => SeedPattern::Point,
+            SeedPattern::MultiPoint => SeedPattern::Starburst,
+            SeedPattern::Starburst => SeedPattern::Point,
         }
     }
 
     pub fn prev(&self) -> SeedPattern {
         match self {
-            SeedPattern::Point => SeedPattern::XShape,
+            SeedPattern::Point => SeedPattern::Starburst,
             SeedPattern::Line => SeedPattern::Point,
             SeedPattern::Cross => SeedPattern::Line,
             SeedPattern::Circle => SeedPattern::Cross,
-            SeedPattern::Diamond => SeedPattern::Circle,
-            SeedPattern::Square => SeedPattern::Diamond,
-            SeedPattern::Spiral => SeedPattern::Square,
-            SeedPattern::Scatter => SeedPattern::Spiral,
+            SeedPattern::Ring => SeedPattern::Circle,
+            SeedPattern::Block => SeedPattern::Ring,
+            SeedPattern::NoisePatch => SeedPattern::Block,
+            SeedPattern::Scatter => SeedPattern::NoisePatch,
             SeedPattern::MultiPoint => SeedPattern::Scatter,
-            SeedPattern::XShape => SeedPattern::MultiPoint,
+            SeedPattern::Starburst => SeedPattern::MultiPoint,
         }
     }
 }
@@ -257,115 +257,47 @@ impl DlaSimulation {
                 self.particles_stuck = count;
                 self.max_radius = radius;
             }
-            SeedPattern::Diamond => {
-                // Diamond (rotated square) seed
-                let cx = self.grid_width / 2;
-                let cy = self.grid_height / 2;
-                let size = 12.min(self.grid_width / 8).min(self.grid_height / 8);
-                let mut count = 0;
-                for i in 0..=size {
-                    // Top-right edge
-                    if cx + i < self.grid_width && cy >= size - i {
-                        let idx = (cy - (size - i)) * self.grid_width + (cx + i);
-                        if self.grid[idx].is_none() {
-                            self.grid[idx] = Some(0);
-                            count += 1;
-                        }
-                    }
-                    // Bottom-right edge
-                    if cx + i < self.grid_width && cy + (size - i) < self.grid_height {
-                        let idx = (cy + (size - i)) * self.grid_width + (cx + i);
-                        if self.grid[idx].is_none() {
-                            self.grid[idx] = Some(0);
-                            count += 1;
-                        }
-                    }
-                    // Top-left edge
-                    if cx >= i && cy >= size - i {
-                        let idx = (cy - (size - i)) * self.grid_width + (cx - i);
-                        if self.grid[idx].is_none() {
-                            self.grid[idx] = Some(0);
-                            count += 1;
-                        }
-                    }
-                    // Bottom-left edge
-                    if cx >= i && cy + (size - i) < self.grid_height {
-                        let idx = (cy + (size - i)) * self.grid_width + (cx - i);
-                        if self.grid[idx].is_none() {
-                            self.grid[idx] = Some(0);
-                            count += 1;
-                        }
-                    }
-                }
-                self.particles_stuck = count;
-                self.max_radius = size as f32;
-            }
-            SeedPattern::Square => {
-                // Square outline seed
-                let cx = self.grid_width / 2;
-                let cy = self.grid_height / 2;
-                let half_size = 10.min(self.grid_width / 8).min(self.grid_height / 8);
-                let mut count = 0;
-                // Draw four edges
-                for i in 0..=half_size * 2 {
-                    let x = cx - half_size + i;
-                    // Top edge
-                    if x < self.grid_width && cy >= half_size {
-                        let idx = (cy - half_size) * self.grid_width + x;
-                        if self.grid[idx].is_none() {
-                            self.grid[idx] = Some(0);
-                            count += 1;
-                        }
-                    }
-                    // Bottom edge
-                    if x < self.grid_width && cy + half_size < self.grid_height {
-                        let idx = (cy + half_size) * self.grid_width + x;
-                        if self.grid[idx].is_none() {
-                            self.grid[idx] = Some(0);
-                            count += 1;
-                        }
-                    }
-                }
-                for i in 1..half_size * 2 {
-                    let y = cy - half_size + i;
-                    // Left edge
-                    if cx >= half_size && y < self.grid_height {
-                        let idx = y * self.grid_width + (cx - half_size);
-                        if self.grid[idx].is_none() {
-                            self.grid[idx] = Some(0);
-                            count += 1;
-                        }
-                    }
-                    // Right edge
-                    if cx + half_size < self.grid_width && y < self.grid_height {
-                        let idx = y * self.grid_width + (cx + half_size);
-                        if self.grid[idx].is_none() {
-                            self.grid[idx] = Some(0);
-                            count += 1;
-                        }
-                    }
-                }
-                self.particles_stuck = count;
-                self.max_radius = (half_size as f32) * 1.414; // Diagonal
-            }
-            SeedPattern::Spiral => {
-                // Archimedean spiral from center
+            SeedPattern::Ring => {
+                // Thick ring seed (hollow core)
                 let cx = self.grid_width as f32 / 2.0;
                 let cy = self.grid_height as f32 / 2.0;
-                let max_radius = 20.0_f32.min((self.grid_width / 6) as f32).min((self.grid_height / 6) as f32);
+                let min_dim = self.grid_width.min(self.grid_height) as f32;
+                let radius = (min_dim * 0.30).clamp(6.0, min_dim * 0.45);
+                let thickness = 2.5_f32;
                 let mut count = 0;
 
-                // Spiral: r = a * theta
-                let turns = 3.0;
-                let steps = (turns * 360.0) as usize;
-                let a = max_radius / (turns * std::f32::consts::TAU);
+                for y in 0..self.grid_height {
+                    for x in 0..self.grid_width {
+                        let dx = x as f32 - cx;
+                        let dy = y as f32 - cy;
+                        let dist = (dx * dx + dy * dy).sqrt();
+                        if (dist >= radius - thickness) && (dist <= radius + thickness) {
+                            let idx = y * self.grid_width + x;
+                            if self.grid[idx].is_none() {
+                                self.grid[idx] = Some(0);
+                                count += 1;
+                            }
+                        }
+                    }
+                }
 
-                for i in 0..steps {
-                    let theta = (i as f32).to_radians();
-                    let r = a * theta;
-                    let x = (cx + r * theta.cos()) as usize;
-                    let y = (cy + r * theta.sin()) as usize;
-                    if x < self.grid_width && y < self.grid_height {
+                self.particles_stuck = count;
+                self.max_radius = radius + thickness;
+            }
+            SeedPattern::Block => {
+                // Solid block seed (forces surface roughening)
+                let cx = self.grid_width / 2;
+                let cy = self.grid_height / 2;
+                let min_dim = self.grid_width.min(self.grid_height);
+                let half_size = (min_dim / 8).max(4);
+                let start_x = cx.saturating_sub(half_size);
+                let end_x = (cx + half_size).min(self.grid_width.saturating_sub(1));
+                let start_y = cy.saturating_sub(half_size);
+                let end_y = (cy + half_size).min(self.grid_height.saturating_sub(1));
+                let mut count = 0;
+
+                for y in start_y..=end_y {
+                    for x in start_x..=end_x {
                         let idx = y * self.grid_width + x;
                         if self.grid[idx].is_none() {
                             self.grid[idx] = Some(0);
@@ -373,8 +305,63 @@ impl DlaSimulation {
                         }
                     }
                 }
+
                 self.particles_stuck = count;
-                self.max_radius = max_radius;
+                self.max_radius = (half_size as f32) * 1.414;
+            }
+            SeedPattern::NoisePatch => {
+                // Dense noisy blob offset from center for asymmetric growth
+                let mut rng = rand::thread_rng();
+                let grid_cx = self.grid_width as f32 / 2.0;
+                let grid_cy = self.grid_height as f32 / 2.0;
+                let min_dim = self.grid_width.min(self.grid_height) as f32;
+                let radius = (min_dim * 0.22).clamp(6.0, 30.0);
+                let radius_i = radius as i32;
+                let jitter = (radius_i / 3).max(1);
+                let mut patch_cx = (self.grid_width as i32 / 3) + rng.gen_range(-jitter..=jitter);
+                let mut patch_cy = (self.grid_height as i32 / 3) + rng.gen_range(-jitter..=jitter);
+                patch_cx = patch_cx.clamp(1, self.grid_width as i32 - 2);
+                patch_cy = patch_cy.clamp(1, self.grid_height as i32 - 2);
+
+                let mut count = 0;
+                let mut max_r: f32 = 1.0;
+
+                for y in (patch_cy - radius_i).max(1)..=(patch_cy + radius_i).min(self.grid_height as i32 - 2) {
+                    for x in (patch_cx - radius_i).max(1)..=(patch_cx + radius_i).min(self.grid_width as i32 - 2) {
+                        let dx = x - patch_cx;
+                        let dy = y - patch_cy;
+                        let dist = ((dx * dx + dy * dy) as f32).sqrt();
+                        if dist <= radius {
+                            let falloff = 1.0 - dist / radius;
+                            let stick_prob = 0.35 + falloff * 0.65; // Dense core, noisy edges
+                            if rng.gen::<f32>() < stick_prob {
+                                let idx = (y as usize) * self.grid_width + (x as usize);
+                                if self.grid[idx].is_none() {
+                                    self.grid[idx] = Some(0);
+                                    count += 1;
+
+                                    let gdx = x as f32 - grid_cx;
+                                    let gdy = y as f32 - grid_cy;
+                                    let gdist = (gdx * gdx + gdy * gdy).sqrt();
+                                    max_r = max_r.max(gdist);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if count == 0 {
+                    // Guarantee at least one seed
+                    let idx = (patch_cy as usize) * self.grid_width + (patch_cx as usize);
+                    self.grid[idx] = Some(0);
+                    count = 1;
+                    let gdx = patch_cx as f32 - grid_cx;
+                    let gdy = patch_cy as f32 - grid_cy;
+                    max_r = (gdx * gdx + gdy * gdy).sqrt();
+                }
+
+                self.particles_stuck = count;
+                self.max_radius = max_r;
             }
             SeedPattern::Scatter => {
                 // Random scattered points in center region
@@ -429,47 +416,58 @@ impl DlaSimulation {
                 self.particles_stuck = count;
                 self.max_radius = spread as f32;
             }
-            SeedPattern::XShape => {
-                // Diagonal cross (X shape)
-                let cx = self.grid_width / 2;
-                let cy = self.grid_height / 2;
-                let arm_len = 10.min(self.grid_width / 8).min(self.grid_height / 8);
+            SeedPattern::Starburst => {
+                // Radial spokes with a thin rim for strong anisotropy
+                let cx = self.grid_width as f32 / 2.0;
+                let cy = self.grid_height as f32 / 2.0;
+                let min_dim = self.grid_width.min(self.grid_height) as f32;
+                let spoke_len = (min_dim * 0.35).clamp(8.0, 40.0);
+                let spokes = 8;
                 let mut count = 0;
 
-                for i in 0..arm_len {
-                    // Top-left to bottom-right diagonal
-                    if cx >= i && cy >= i {
-                        let idx = (cy - i) * self.grid_width + (cx - i);
-                        if self.grid[idx].is_none() {
-                            self.grid[idx] = Some(0);
-                            count += 1;
+                // Central hub
+                let hub_x = cx as usize;
+                let hub_y = cy as usize;
+                let hub_idx = hub_y * self.grid_width + hub_x;
+                if self.grid[hub_idx].is_none() {
+                    self.grid[hub_idx] = Some(0);
+                    count += 1;
+                }
+
+                for s in 0..spokes {
+                    let angle = (s as f32) * (std::f32::consts::TAU / spokes as f32);
+                    for step in 1..=(spoke_len as usize) {
+                        let fx = cx + (step as f32) * angle.cos();
+                        let fy = cy + (step as f32) * angle.sin();
+                        let x = fx.round() as isize;
+                        let y = fy.round() as isize;
+                        if x > 0 && x < self.grid_width as isize - 1 && y > 0 && y < self.grid_height as isize - 1 {
+                            let idx = (y as usize) * self.grid_width + (x as usize);
+                            if self.grid[idx].is_none() {
+                                self.grid[idx] = Some(0);
+                                count += 1;
+                            }
                         }
                     }
-                    if cx + i < self.grid_width && cy + i < self.grid_height {
-                        let idx = (cy + i) * self.grid_width + (cx + i);
-                        if self.grid[idx].is_none() {
-                            self.grid[idx] = Some(0);
-                            count += 1;
-                        }
-                    }
-                    // Top-right to bottom-left diagonal
-                    if cx + i < self.grid_width && cy >= i {
-                        let idx = (cy - i) * self.grid_width + (cx + i);
-                        if self.grid[idx].is_none() {
-                            self.grid[idx] = Some(0);
-                            count += 1;
-                        }
-                    }
-                    if cx >= i && cy + i < self.grid_height {
-                        let idx = (cy + i) * self.grid_width + (cx - i);
+                }
+
+                // Thin rim to connect spokes
+                let rim_radius = spoke_len;
+                for angle_deg in (0..360).step_by(4) {
+                    let angle = (angle_deg as f32).to_radians();
+                    let x = (cx + rim_radius * angle.cos()) as isize;
+                    let y = (cy + rim_radius * angle.sin()) as isize;
+                    if x > 0 && x < self.grid_width as isize - 1 && y > 0 && y < self.grid_height as isize - 1 {
+                        let idx = (y as usize) * self.grid_width + (x as usize);
                         if self.grid[idx].is_none() {
                             self.grid[idx] = Some(0);
                             count += 1;
                         }
                     }
                 }
+
                 self.particles_stuck = count;
-                self.max_radius = (arm_len as f32) * 1.414; // Diagonal length
+                self.max_radius = rim_radius;
             }
         }
 
