@@ -1,12 +1,54 @@
 use crate::braille;
 use crate::color::{ColorLut, ColorScheme};
+use crate::config::AppConfig;
 use crate::simulation::{DlaSimulation, SeedPattern};
+use std::path::Path;
 
 /// Popup menu state for Shift+letter parameter selection
 #[derive(Debug, Clone)]
 pub struct ParamPopup {
     pub options: Vec<(Focus, &'static str)>, // (Focus variant, display name)
     pub selected_idx: usize,
+}
+
+/// Text input popup state for filename entry
+#[derive(Debug, Clone)]
+pub struct TextInputPopup {
+    pub title: &'static str,
+    pub input: String,
+    pub cursor_pos: usize,
+}
+
+impl TextInputPopup {
+    pub fn new(title: &'static str, default_value: &str) -> Self {
+        let input = default_value.to_string();
+        let cursor_pos = input.len();
+        Self {
+            title,
+            input,
+            cursor_pos,
+        }
+    }
+
+    pub fn insert_char(&mut self, c: char) {
+        self.input.insert(self.cursor_pos, c);
+        self.cursor_pos += 1;
+    }
+
+    pub fn delete_char(&mut self) {
+        if self.cursor_pos > 0 {
+            self.cursor_pos -= 1;
+            self.input.remove(self.cursor_pos);
+        }
+    }
+
+    pub fn move_cursor_left(&mut self) {
+        self.cursor_pos = self.cursor_pos.saturating_sub(1);
+    }
+
+    pub fn move_cursor_right(&mut self) {
+        self.cursor_pos = (self.cursor_pos + 1).min(self.input.len());
+    }
 }
 
 /// Focus state for parameter editing in the sidebar
@@ -157,6 +199,8 @@ pub struct App {
     pub help_scroll: u16,
     pub controls_scroll: u16,
     pub param_popup: Option<ParamPopup>,
+    pub export_popup: Option<TextInputPopup>,
+    pub export_result: Option<Result<String, String>>,
 }
 
 impl App {
@@ -175,6 +219,8 @@ impl App {
             help_scroll: 0,
             controls_scroll: 0,
             param_popup: None,
+            export_popup: None,
+            export_result: None,
         }
     }
 
@@ -536,5 +582,58 @@ impl App {
                 popup.selected_idx = 0;
             }
         }
+    }
+
+    // === Export popup methods ===
+
+    /// Open export popup with default filename
+    pub fn open_export_popup(&mut self) {
+        self.export_popup = Some(TextInputPopup::new(" Export Config ", "dla-config.json"));
+    }
+
+    /// Close export popup without saving
+    pub fn close_export_popup(&mut self) {
+        self.export_popup = None;
+    }
+
+    /// Confirm export and save file
+    pub fn confirm_export(&mut self) {
+        if let Some(popup) = &self.export_popup {
+            let config = self.to_config();
+            let path = Path::new(&popup.input);
+            self.export_result = Some(config.save_to_file(path).map(|_| popup.input.clone()));
+        }
+        self.export_popup = None;
+    }
+
+    /// Clear export result (call after displaying it)
+    pub fn clear_export_result(&mut self) {
+        self.export_result = None;
+    }
+
+    /// Create AppConfig from current state
+    pub fn to_config(&self) -> AppConfig {
+        AppConfig {
+            version: 1,
+            settings: self.simulation.settings.clone(),
+            seed_pattern: self.simulation.seed_pattern,
+            stickiness: self.simulation.stickiness,
+            num_particles: self.simulation.num_particles,
+            color_scheme: self.color_scheme,
+            steps_per_frame: self.steps_per_frame,
+            color_by_age: self.color_by_age,
+        }
+    }
+
+    /// Apply AppConfig to current state
+    pub fn apply_config(&mut self, config: &AppConfig) {
+        self.simulation.settings = config.settings.clone();
+        self.simulation.seed_pattern = config.seed_pattern;
+        self.simulation.stickiness = config.stickiness;
+        self.simulation.num_particles = config.num_particles;
+        self.color_scheme = config.color_scheme;
+        self.color_lut = self.color_scheme.build_lut();
+        self.steps_per_frame = config.steps_per_frame;
+        self.color_by_age = config.color_by_age;
     }
 }

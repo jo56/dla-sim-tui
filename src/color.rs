@@ -1,4 +1,5 @@
 use ratatui::style::Color;
+use serde::{Deserialize, Serialize};
 
 /// Pre-computed color lookup table (256 entries for fast gradient access)
 pub type ColorLut = [Color; 256];
@@ -11,7 +12,7 @@ pub fn map_from_lut(lut: &ColorLut, t: f32) -> Color {
 }
 
 /// Color schemes for visualization
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
 pub enum ColorScheme {
     #[default]
     Ice,

@@ -1,13 +1,15 @@
 mod app;
 mod braille;
 mod color;
+mod config;
 mod presets;
 mod settings;
 mod simulation;
 mod ui;
 
 use app::{App, Focus};
-use clap::Parser;
+use clap::{CommandFactory, FromArgMatches, Parser};
+use config::AppConfig;
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
     execute,
@@ -23,6 +25,10 @@ use std::time::Duration;
 #[command(name = "dla-simulation")]
 #[command(about = "Diffusion-Limited Aggregation simulation in the terminal")]
 struct Args {
+    /// Load settings from a config file (CLI args override config values)
+    #[arg(long, value_name = "FILE")]
+    config: Option<String>,
+
     // === Basic Parameters ===
     /// Number of particles to simulate (auto-capped to ~20% of grid area)
     #[arg(short = 'p', long, default_value = "5000")]
@@ -158,20 +164,29 @@ fn parse_color_mode(s: &str) -> ColorMode {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = Args::parse();
+    use clap::parser::ValueSource;
 
-    // Parse seed pattern
-    let seed_pattern = match args.seed.to_lowercase().as_str() {
-        "line" => SeedPattern::Line,
-        "cross" => SeedPattern::Cross,
-        "circle" => SeedPattern::Circle,
-        "ring" => SeedPattern::Ring,
-        "block" | "filled" => SeedPattern::Block,
-        "noise" | "noise-patch" => SeedPattern::NoisePatch,
-        "scatter" => SeedPattern::Scatter,
-        "multipoint" | "multi-point" => SeedPattern::MultiPoint,
-        "starburst" | "spokes" | "star" => SeedPattern::Starburst,
-        _ => SeedPattern::Point,
+    // Parse args and get matches for value_source checking
+    let matches = Args::command().get_matches();
+    let args = Args::from_arg_matches(&matches)?;
+
+    // Load config file if specified
+    let base_config = if let Some(config_path) = &args.config {
+        match AppConfig::load_from_file(std::path::Path::new(config_path)) {
+            Ok(cfg) => Some(cfg),
+            Err(e) => {
+                eprintln!("Warning: Failed to load config file: {}", e);
+                eprintln!("Using default settings.");
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    // Helper to check if a CLI arg was explicitly provided
+    let is_explicit = |name: &str| -> bool {
+        matches.value_source(name) == Some(ValueSource::CommandLine)
     };
 
     // Setup terminal
@@ -192,37 +207,107 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (canvas_width, canvas_height) = ui::get_canvas_size(frame_rect, false);
     let mut app = App::new(canvas_width, canvas_height);
 
-    // Apply CLI args (particle count capped to grid-based max)
+    // Apply config file settings first (if loaded)
+    if let Some(cfg) = &base_config {
+        app.apply_config(cfg);
+    }
+
+    // Apply CLI args - only if explicitly provided (override config) or no config loaded
     let max_particles = app.simulation.max_particles();
-    app.simulation.num_particles = args.particles.clamp(100, max_particles);
-    app.simulation.stickiness = args.stickiness.clamp(0.1, 1.0);
-    app.steps_per_frame = args.speed.clamp(1, 50);
 
-    // Apply movement settings
-    app.simulation.settings.walk_step_size = args.walk_step.clamp(0.5, 5.0);
-    app.simulation.settings.walk_bias_angle = args.walk_angle.clamp(0.0, 360.0);
-    app.simulation.settings.walk_bias_strength = args.walk_force.clamp(0.0, 0.5);
-    app.simulation.settings.radial_bias = args.radial_bias.clamp(-0.3, 0.3);
+    // Basic params
+    if is_explicit("particles") || base_config.is_none() {
+        app.simulation.num_particles = args.particles.clamp(100, max_particles);
+    } else {
+        // Cap config value to max_particles
+        app.simulation.num_particles = app.simulation.num_particles.min(max_particles);
+    }
+    if is_explicit("stickiness") || base_config.is_none() {
+        app.simulation.stickiness = args.stickiness.clamp(0.1, 1.0);
+    }
+    if is_explicit("speed") || base_config.is_none() {
+        app.steps_per_frame = args.speed.clamp(1, 50);
+    }
 
-    // Apply sticking settings
-    app.simulation.settings.neighborhood = parse_neighborhood(&args.neighborhood);
-    app.simulation.settings.multi_contact_min = args.multi_contact.clamp(1, 4);
-    app.simulation.settings.tip_stickiness = args.tip_stickiness.clamp(0.1, 1.0);
-    app.simulation.settings.side_stickiness = args.side_stickiness.clamp(0.1, 1.0);
-    app.simulation.settings.stickiness_gradient = args.stickiness_gradient.clamp(-0.5, 0.5);
+    // Movement settings
+    if is_explicit("walk_step") || base_config.is_none() {
+        app.simulation.settings.walk_step_size = args.walk_step.clamp(0.5, 5.0);
+    }
+    if is_explicit("walk_angle") || base_config.is_none() {
+        app.simulation.settings.walk_bias_angle = args.walk_angle.clamp(0.0, 360.0);
+    }
+    if is_explicit("walk_force") || base_config.is_none() {
+        app.simulation.settings.walk_bias_strength = args.walk_force.clamp(0.0, 0.5);
+    }
+    if is_explicit("radial_bias") || base_config.is_none() {
+        app.simulation.settings.radial_bias = args.radial_bias.clamp(-0.3, 0.3);
+    }
 
-    // Apply spawn/boundary settings
-    app.simulation.settings.spawn_mode = parse_spawn_mode(&args.spawn_mode);
-    app.simulation.settings.boundary_behavior = parse_boundary(&args.boundary);
-    app.simulation.settings.spawn_radius_offset = args.spawn_offset.clamp(5.0, 50.0);
-    app.simulation.settings.escape_multiplier = args.escape_mult.clamp(2.0, 6.0);
-    app.simulation.settings.min_spawn_radius = args.min_radius.clamp(20.0, 100.0);
-    app.simulation.settings.max_walk_iterations = args.max_iterations.clamp(1000, 50000);
+    // Sticking settings
+    if is_explicit("neighborhood") || base_config.is_none() {
+        app.simulation.settings.neighborhood = parse_neighborhood(&args.neighborhood);
+    }
+    if is_explicit("multi_contact") || base_config.is_none() {
+        app.simulation.settings.multi_contact_min = args.multi_contact.clamp(1, 4);
+    }
+    if is_explicit("tip_stickiness") || base_config.is_none() {
+        app.simulation.settings.tip_stickiness = args.tip_stickiness.clamp(0.1, 1.0);
+    }
+    if is_explicit("side_stickiness") || base_config.is_none() {
+        app.simulation.settings.side_stickiness = args.side_stickiness.clamp(0.1, 1.0);
+    }
+    if is_explicit("stickiness_gradient") || base_config.is_none() {
+        app.simulation.settings.stickiness_gradient = args.stickiness_gradient.clamp(-0.5, 0.5);
+    }
 
-    // Apply visual settings
-    app.simulation.settings.color_mode = parse_color_mode(&args.color_mode);
-    app.simulation.settings.highlight_recent = args.highlight.clamp(0, 50);
-    app.simulation.settings.invert_colors = args.invert;
+    // Spawn/boundary settings
+    if is_explicit("spawn_mode") || base_config.is_none() {
+        app.simulation.settings.spawn_mode = parse_spawn_mode(&args.spawn_mode);
+    }
+    if is_explicit("boundary") || base_config.is_none() {
+        app.simulation.settings.boundary_behavior = parse_boundary(&args.boundary);
+    }
+    if is_explicit("spawn_offset") || base_config.is_none() {
+        app.simulation.settings.spawn_radius_offset = args.spawn_offset.clamp(5.0, 50.0);
+    }
+    if is_explicit("escape_mult") || base_config.is_none() {
+        app.simulation.settings.escape_multiplier = args.escape_mult.clamp(2.0, 6.0);
+    }
+    if is_explicit("min_radius") || base_config.is_none() {
+        app.simulation.settings.min_spawn_radius = args.min_radius.clamp(20.0, 100.0);
+    }
+    if is_explicit("max_iterations") || base_config.is_none() {
+        app.simulation.settings.max_walk_iterations = args.max_iterations.clamp(1000, 50000);
+    }
+
+    // Visual settings
+    if is_explicit("color_mode") || base_config.is_none() {
+        app.simulation.settings.color_mode = parse_color_mode(&args.color_mode);
+    }
+    if is_explicit("highlight") || base_config.is_none() {
+        app.simulation.settings.highlight_recent = args.highlight.clamp(0, 50);
+    }
+    if is_explicit("invert") || base_config.is_none() {
+        app.simulation.settings.invert_colors = args.invert;
+    }
+
+    // Determine seed pattern - CLI overrides config
+    let seed_pattern = if is_explicit("seed") || base_config.is_none() {
+        match args.seed.to_lowercase().as_str() {
+            "line" => SeedPattern::Line,
+            "cross" => SeedPattern::Cross,
+            "circle" => SeedPattern::Circle,
+            "ring" => SeedPattern::Ring,
+            "block" | "filled" => SeedPattern::Block,
+            "noise" | "noise-patch" => SeedPattern::NoisePatch,
+            "scatter" => SeedPattern::Scatter,
+            "multipoint" | "multi-point" => SeedPattern::MultiPoint,
+            "starburst" | "spokes" | "star" => SeedPattern::Starburst,
+            _ => SeedPattern::Point,
+        }
+    } else {
+        app.simulation.seed_pattern
+    };
 
     // Reset with seed pattern (must come after settings are applied)
     app.simulation.reset_with_seed(seed_pattern);
@@ -279,6 +364,41 @@ fn run_app<B: ratatui::backend::Backend>(
                         continue;
                     }
 
+                    // === Handle export popup keys (if export popup is open) ===
+                    if app.export_popup.is_some() {
+                        match key.code {
+                            KeyCode::Enter => app.confirm_export(),
+                            KeyCode::Esc => app.close_export_popup(),
+                            KeyCode::Backspace => {
+                                if let Some(popup) = &mut app.export_popup {
+                                    popup.delete_char();
+                                }
+                            }
+                            KeyCode::Left => {
+                                if let Some(popup) = &mut app.export_popup {
+                                    popup.move_cursor_left();
+                                }
+                            }
+                            KeyCode::Right => {
+                                if let Some(popup) = &mut app.export_popup {
+                                    popup.move_cursor_right();
+                                }
+                            }
+                            KeyCode::Char(c) => {
+                                if let Some(popup) = &mut app.export_popup {
+                                    popup.insert_char(c);
+                                }
+                            }
+                            _ => {}
+                        }
+                        continue;
+                    }
+
+                    // Clear export result on any key press
+                    if app.export_result.is_some() {
+                        app.clear_export_result();
+                    }
+
                     // === Handle Shift+letter to open popup ===
                     if key.modifiers.contains(KeyModifiers::SHIFT) {
                         if let KeyCode::Char(c) = key.code {
@@ -303,6 +423,7 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Char('r') | KeyCode::Char('R') => app.reset(),
                         KeyCode::Char('v') | KeyCode::Char('V') => app.toggle_fullscreen(),
                         KeyCode::Char('h') | KeyCode::Char('H') => app.toggle_help(),
+                        KeyCode::Char('x') | KeyCode::Char('X') => app.open_export_popup(),
                         KeyCode::Char('1') => app.set_seed_pattern(SeedPattern::Point),
                         KeyCode::Char('2') => app.set_seed_pattern(SeedPattern::Line),
                         KeyCode::Char('3') => app.set_seed_pattern(SeedPattern::Cross),

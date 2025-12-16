@@ -1,4 +1,4 @@
-use crate::app::{App, Focus, ParamPopup};
+use crate::app::{App, Focus, ParamPopup, TextInputPopup};
 use crate::braille;
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -57,6 +57,16 @@ pub fn render(frame: &mut Frame, app: &App) {
     // Render param popup if open
     if let Some(popup) = &app.param_popup {
         render_param_popup(frame, area, popup);
+    }
+
+    // Render export popup if open (overlays everything)
+    if let Some(popup) = &app.export_popup {
+        render_export_popup(frame, area, popup);
+    }
+
+    // Render export result toast if present
+    if let Some(result) = &app.export_result {
+        render_export_result(frame, area, result);
     }
 }
 
@@ -612,6 +622,7 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled("Shift+Tab - Previous parameter", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Up/Down - Adjust parameter", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("V - Toggle fullscreen", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("X - Export config to file", Style::default().fg(TEXT_COLOR))),
         Line::from(Span::styled("Q - Quit", Style::default().fg(TEXT_COLOR))),
         Line::from(""),
         Line::from(Span::styled("PARAMETER POPUP:", Style::default().fg(HIGHLIGHT_COLOR))),
@@ -760,6 +771,88 @@ fn render_param_popup(frame: &mut Frame, area: Rect, popup: &ParamPopup) {
         .block(block)
         .alignment(Alignment::Left)
         .scroll((scroll, 0));
+
+    frame.render_widget(paragraph, popup_area);
+}
+
+/// Render text input popup for export filename
+fn render_export_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup) {
+    let popup_width = 44.min(area.width.saturating_sub(4));
+    let popup_height = 5;
+
+    let popup_x = area.x + (area.width.saturating_sub(popup_width)) / 2;
+    let popup_y = area.y + (area.height.saturating_sub(popup_height)) / 2;
+
+    let popup_area = Rect {
+        x: popup_x,
+        y: popup_y,
+        width: popup_width,
+        height: popup_height,
+    };
+
+    frame.render_widget(Clear, popup_area);
+
+    // Build input line with cursor
+    let (before_cursor, after_cursor) = popup.input.split_at(popup.cursor_pos);
+    let content = vec![
+        Line::from(vec![
+            Span::styled(before_cursor, Style::default().fg(TEXT_COLOR)),
+            Span::styled(
+                "_",
+                Style::default()
+                    .fg(HIGHLIGHT_COLOR)
+                    .add_modifier(Modifier::SLOW_BLINK),
+            ),
+            Span::styled(after_cursor, Style::default().fg(TEXT_COLOR)),
+        ]),
+        Line::from(""),
+        Line::from(Span::styled(
+            "Enter: save | Esc: cancel",
+            Style::default().fg(DIM_TEXT_COLOR),
+        )),
+    ];
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double)
+        .border_style(Style::default().fg(HIGHLIGHT_COLOR))
+        .title(popup.title);
+
+    let paragraph = Paragraph::new(content).block(block);
+    frame.render_widget(paragraph, popup_area);
+}
+
+/// Render export result toast (success or error message)
+fn render_export_result(frame: &mut Frame, area: Rect, result: &Result<String, String>) {
+    let (message, color) = match result {
+        Ok(filename) => (format!("Saved: {}", filename), Color::Green),
+        Err(e) => (format!("Error: {}", e), Color::Red),
+    };
+
+    let msg_width = (message.len() as u16 + 4).min(area.width.saturating_sub(4));
+    let popup_x = area.x + (area.width.saturating_sub(msg_width)) / 2;
+    let popup_y = area.y + area.height.saturating_sub(5);
+
+    let popup_area = Rect {
+        x: popup_x,
+        y: popup_y,
+        width: msg_width,
+        height: 3,
+    };
+
+    frame.render_widget(Clear, popup_area);
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(color));
+
+    let paragraph = Paragraph::new(Line::from(Span::styled(
+        message,
+        Style::default().fg(color),
+    )))
+    .block(block)
+    .alignment(Alignment::Center);
 
     frame.render_widget(paragraph, popup_area);
 }
