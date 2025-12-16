@@ -9,7 +9,6 @@ use crate::settings::ColorMode;
 use crate::simulation::DlaSimulation;
 use std::io::Write;
 use std::process::{Child, ChildStdin, Command, Stdio};
-use std::time::Instant;
 
 /// RGB frame buffer for video encoding
 pub struct RgbFrame {
@@ -84,7 +83,6 @@ pub enum RecordingState {
     Recording {
         encoder: Box<dyn FrameEncoder>,
         frame_count: usize,
-        start_time: Instant,
         filename: String,
         /// Track frames for 30fps capture from 60fps loop
         frame_skip_counter: u8,
@@ -95,14 +93,12 @@ pub enum RecordingState {
 pub trait FrameEncoder: Send {
     fn add_frame(&mut self, frame: &RgbFrame) -> Result<(), String>;
     fn finish(self: Box<Self>) -> Result<(), String>;
-    fn format_name(&self) -> &str;
 }
 
 /// FFmpeg-based encoder for MP4/WebM output
 pub struct FfmpegEncoder {
     child: Child,
     stdin: ChildStdin,
-    format: OutputFormat,
 }
 
 impl FfmpegEncoder {
@@ -156,11 +152,7 @@ impl FfmpegEncoder {
 
         let stdin = child.stdin.take().ok_or("Failed to get FFmpeg stdin")?;
 
-        Ok(Self {
-            child,
-            stdin,
-            format,
-        })
+        Ok(Self { child, stdin })
     }
 }
 
@@ -177,14 +169,6 @@ impl FrameEncoder for FfmpegEncoder {
             .wait()
             .map_err(|e| format!("FFmpeg failed: {}", e))?;
         Ok(())
-    }
-
-    fn format_name(&self) -> &str {
-        match self.format {
-            OutputFormat::Mp4 => "MP4 (FFmpeg)",
-            OutputFormat::WebM => "WebM (FFmpeg)",
-            OutputFormat::Gif => "GIF",
-        }
     }
 }
 
@@ -306,10 +290,6 @@ impl FrameEncoder for GifEncoder {
         // Encoder finalizes on drop
         Ok(())
     }
-
-    fn format_name(&self) -> &str {
-        "GIF"
-    }
 }
 
 /// Main recorder struct
@@ -349,14 +329,6 @@ impl Recorder {
     pub fn frame_count(&self) -> Option<usize> {
         match &self.state {
             RecordingState::Recording { frame_count, .. } => Some(*frame_count),
-            _ => None,
-        }
-    }
-
-    /// Get elapsed time (if recording)
-    pub fn elapsed(&self) -> Option<std::time::Duration> {
-        match &self.state {
-            RecordingState::Recording { start_time, .. } => Some(start_time.elapsed()),
             _ => None,
         }
     }
@@ -428,7 +400,6 @@ impl Recorder {
         self.state = RecordingState::Recording {
             encoder,
             frame_count: 0,
-            start_time: Instant::now(),
             filename,
             frame_skip_counter: 0,
         };
