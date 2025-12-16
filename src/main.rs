@@ -494,23 +494,23 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Tab => app.next_focus(),
                         KeyCode::BackTab => app.prev_focus(),
                         KeyCode::Up => {
-                            if !app.show_help {
-                                if app.focus.is_param() {
-                                    app.adjust_focused_up();
-                                } else {
-                                    app.scroll_controls_up();
-                                }
+                            if app.show_help {
+                                app.scroll_help_up();
+                            } else if app.focus.is_param() {
+                                app.adjust_focused_up();
+                            } else {
+                                app.scroll_controls_up();
                             }
                         }
                         KeyCode::Down => {
-                            if !app.show_help {
-                                if app.focus.is_param() {
-                                    app.adjust_focused_down();
-                                } else {
-                                    let term_size = terminal.size().unwrap_or_default();
-                                    let visible = ui::get_controls_visible_lines(term_size.height);
-                                    app.scroll_controls_down(ui::CONTROLS_CONTENT_LINES.saturating_sub(visible));
-                                }
+                            if app.show_help {
+                                app.scroll_help_down(ui::HELP_CONTENT_LINES);
+                            } else if app.focus.is_param() {
+                                app.adjust_focused_down();
+                            } else {
+                                let term_size = terminal.size().unwrap_or_default();
+                                let visible = ui::get_controls_visible_lines(term_size.height);
+                                app.scroll_controls_down(ui::CONTROLS_CONTENT_LINES.saturating_sub(visible));
                             }
                         }
                         KeyCode::Esc => {
@@ -518,16 +518,6 @@ fn run_app<B: ratatui::backend::Backend>(
                                 app.toggle_help();
                             } else if app.focus.is_param() {
                                 app.focus = Focus::Controls;
-                            }
-                        }
-                        KeyCode::Char('j') | KeyCode::Char('J') => {
-                            if app.show_help {
-                                app.scroll_help_down(ui::HELP_CONTENT_LINES);
-                            }
-                        }
-                        KeyCode::Char('k') | KeyCode::Char('K') => {
-                            if app.show_help {
-                                app.scroll_help_up();
                             }
                         }
                         _ => {}

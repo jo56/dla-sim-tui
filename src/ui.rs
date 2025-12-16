@@ -691,7 +691,7 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
 
     // Update title to show scroll hint if scrollable
     let title = if is_scrollable {
-        " Help (J/K scroll, H to close) "
+        " Help (Up/Down scroll, H to close) "
     } else {
         " Help (H to close) "
     };
