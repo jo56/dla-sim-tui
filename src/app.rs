@@ -5,7 +5,6 @@ use crate::simulation::{DlaSimulation, SeedPattern};
 /// Popup menu state for Shift+letter parameter selection
 #[derive(Debug, Clone)]
 pub struct ParamPopup {
-    pub letter: char,
     pub options: Vec<(Focus, &'static str)>, // (Focus variant, display name)
     pub selected_idx: usize,
 }
@@ -458,7 +457,6 @@ impl App {
         let options = Self::get_params_for_letter(letter);
         if !options.is_empty() {
             self.param_popup = Some(ParamPopup {
-                letter: letter.to_ascii_uppercase(),
                 options,
                 selected_idx: 0,
             });
@@ -498,7 +496,6 @@ impl App {
     /// Open popup with all parameters (Shift+?)
     pub fn open_all_params_popup(&mut self) {
         self.param_popup = Some(ParamPopup {
-            letter: '?',
             options: Self::get_all_params(),
             selected_idx: 0,
         });

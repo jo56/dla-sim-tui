@@ -1,14 +1,8 @@
-use crate::settings::{BoundaryBehavior, NeighborhoodType, SimulationSettings, SpawnMode};
+use crate::settings::{BoundaryBehavior, SimulationSettings, SpawnMode};
 use rand::rngs::ThreadRng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
-// Default simulation constants (now configurable via SimulationSettings)
-const DEFAULT_WALK_STEP_SIZE: f32 = 2.0;
-const DEFAULT_MAX_WALK_ITERATIONS: usize = 10000;
-const DEFAULT_SPAWN_RADIUS_OFFSET: f32 = 10.0;
-const DEFAULT_MIN_SPAWN_RADIUS: f32 = 50.0;
-const DEFAULT_ESCAPE_MULTIPLIER: f32 = 2.0;
 const BOUNDARY_MARGIN: f32 = 1.0;
 
 /// Seed pattern types for initial structure
@@ -709,15 +703,6 @@ impl DlaSimulation {
 
         self.particles_stuck = count;
         self.max_radius = rim_radius;
-    }
-
-    /// Get cell state at (x, y) - returns just the age for backwards compatibility
-    pub fn get_cell(&self, x: usize, y: usize) -> Option<usize> {
-        if x < self.grid_width && y < self.grid_height {
-            self.grid[y * self.grid_width + x].map(|p| p.age)
-        } else {
-            None
-        }
     }
 
     /// Get full particle data at (x, y)

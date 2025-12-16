@@ -13,14 +13,6 @@ pub enum NeighborhoodType {
 }
 
 impl NeighborhoodType {
-    pub fn name(&self) -> &str {
-        match self {
-            NeighborhoodType::VonNeumann => "Von Neumann (4)",
-            NeighborhoodType::Moore => "Moore (8)",
-            NeighborhoodType::Extended => "Extended (24)",
-        }
-    }
-
     pub fn short_name(&self) -> &str {
         match self {
             NeighborhoodType::VonNeumann => "VonNeumann",
@@ -216,59 +208,6 @@ impl ColorMode {
             ColorMode::Density => ColorMode::Distance,
             ColorMode::Direction => ColorMode::Density,
         }
-    }
-}
-
-/// Settings group for UI navigation
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub enum SettingsGroup {
-    #[default]
-    Basic,
-    Movement,
-    Sticking,
-    Spawn,
-    Visual,
-}
-
-impl SettingsGroup {
-    pub fn name(&self) -> &str {
-        match self {
-            SettingsGroup::Basic => "Basic",
-            SettingsGroup::Movement => "Move",
-            SettingsGroup::Sticking => "Stick",
-            SettingsGroup::Spawn => "Spawn",
-            SettingsGroup::Visual => "Visual",
-        }
-    }
-
-    pub fn next(&self) -> Self {
-        match self {
-            SettingsGroup::Basic => SettingsGroup::Movement,
-            SettingsGroup::Movement => SettingsGroup::Sticking,
-            SettingsGroup::Sticking => SettingsGroup::Spawn,
-            SettingsGroup::Spawn => SettingsGroup::Visual,
-            SettingsGroup::Visual => SettingsGroup::Basic,
-        }
-    }
-
-    pub fn prev(&self) -> Self {
-        match self {
-            SettingsGroup::Basic => SettingsGroup::Visual,
-            SettingsGroup::Movement => SettingsGroup::Basic,
-            SettingsGroup::Sticking => SettingsGroup::Movement,
-            SettingsGroup::Spawn => SettingsGroup::Sticking,
-            SettingsGroup::Visual => SettingsGroup::Spawn,
-        }
-    }
-
-    pub fn all() -> &'static [SettingsGroup] {
-        &[
-            SettingsGroup::Basic,
-            SettingsGroup::Movement,
-            SettingsGroup::Sticking,
-            SettingsGroup::Spawn,
-            SettingsGroup::Visual,
-        ]
     }
 }
 
