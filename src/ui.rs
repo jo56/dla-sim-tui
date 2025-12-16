@@ -1,8 +1,8 @@
-use crate::app::{App, Focus};
+use crate::app::{App, Focus, ParamPopup};
 use crate::braille;
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
     Frame,
@@ -14,10 +14,10 @@ const SIDEBAR_WIDTH: u16 = 22;
 pub const HELP_CONTENT_LINES: u16 = 60;
 
 /// Number of lines in controls content
-pub const CONTROLS_CONTENT_LINES: u16 = 8;
+pub const CONTROLS_CONTENT_LINES: u16 = 5;
 
 /// Number of lines in parameters content
-pub const PARAMS_CONTENT_LINES: u16 = 12;
+pub const PARAMS_CONTENT_LINES: u16 = 24;
 
 // UI color scheme
 const BORDER_COLOR: Color = Color::Cyan;
@@ -52,6 +52,11 @@ pub fn render(frame: &mut Frame, app: &App) {
 
     if app.show_help {
         render_help_overlay(frame, area, app);
+    }
+
+    // Render param popup if open
+    if let Some(popup) = &app.param_popup {
+        render_param_popup(frame, area, popup);
     }
 }
 
@@ -205,21 +210,17 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
 
     let settings = &app.simulation.settings;
 
+    // Alphabetically ordered parameters
     let content = vec![
         make_line(
-            "sticky",
-            format!("{:.2}", app.simulation.stickiness),
-            app.focus == Focus::Stickiness,
+            "age",
+            if app.color_by_age { "on" } else { "off" }.to_string(),
+            app.focus == Focus::Age,
         ),
         make_line(
-            "particles",
-            format!("{}", app.simulation.num_particles),
-            app.focus == Focus::Particles,
-        ),
-        make_line(
-            "seed",
-            app.simulation.seed_pattern.name().to_lowercase(),
-            app.focus == Focus::Seed,
+            "bound",
+            settings.boundary_behavior.name().to_lowercase(),
+            app.focus == Focus::Boundary,
         ),
         make_line(
             "color",
@@ -227,34 +228,19 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::ColorScheme,
         ),
         make_line(
-            "speed",
-            format!("{}", app.steps_per_frame),
-            app.focus == Focus::Speed,
+            "dir",
+            format!("{:.0}°", settings.walk_bias_angle),
+            app.focus == Focus::Direction,
         ),
         make_line(
-            "mode",
-            settings.color_mode.name().to_lowercase(),
-            app.focus == Focus::Mode,
+            "escape",
+            format!("{:.1}", settings.escape_multiplier),
+            app.focus == Focus::EscapeMult,
         ),
         make_line(
-            "neighbors",
-            settings.neighborhood.short_name().to_lowercase(),
-            app.focus == Focus::Neighborhood,
-        ),
-        make_line(
-            "boundary",
-            settings.boundary_behavior.name().to_lowercase(),
-            app.focus == Focus::Boundary,
-        ),
-        make_line(
-            "spawn",
-            settings.spawn_mode.name().to_lowercase(),
-            app.focus == Focus::Spawn,
-        ),
-        make_line(
-            "step",
-            format!("{:.1}", settings.walk_step_size),
-            app.focus == Focus::WalkStep,
+            "force",
+            format!("{:.2}", settings.walk_bias_strength),
+            app.focus == Focus::Force,
         ),
         make_line(
             "hi-lt",
@@ -265,6 +251,86 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             "invert",
             if settings.invert_colors { "on" } else { "off" }.to_string(),
             app.focus == Focus::Invert,
+        ),
+        make_line(
+            "maxwalk",
+            format!("{}", settings.max_walk_iterations),
+            app.focus == Focus::MaxIterations,
+        ),
+        make_line(
+            "minrad",
+            format!("{:.0}", settings.min_spawn_radius),
+            app.focus == Focus::MinRadius,
+        ),
+        make_line(
+            "mode",
+            settings.color_mode.name().to_lowercase(),
+            app.focus == Focus::Mode,
+        ),
+        make_line(
+            "multi",
+            format!("{}", settings.multi_contact_min),
+            app.focus == Focus::MultiContact,
+        ),
+        make_line(
+            "neighb",
+            settings.neighborhood.short_name().to_lowercase(),
+            app.focus == Focus::Neighborhood,
+        ),
+        make_line(
+            "particles",
+            format!("{}", app.simulation.num_particles),
+            app.focus == Focus::Particles,
+        ),
+        make_line(
+            "radial",
+            format!("{:.2}", settings.radial_bias),
+            app.focus == Focus::RadialBias,
+        ),
+        make_line(
+            "seed",
+            app.simulation.seed_pattern.name().to_lowercase(),
+            app.focus == Focus::Seed,
+        ),
+        make_line(
+            "side",
+            format!("{:.1}", settings.side_stickiness),
+            app.focus == Focus::SideSticky,
+        ),
+        make_line(
+            "spawn",
+            settings.spawn_mode.name().to_lowercase(),
+            app.focus == Focus::Spawn,
+        ),
+        make_line(
+            "spnoff",
+            format!("{:.0}", settings.spawn_radius_offset),
+            app.focus == Focus::SpawnOffset,
+        ),
+        make_line(
+            "speed",
+            format!("{}", app.steps_per_frame),
+            app.focus == Focus::Speed,
+        ),
+        make_line(
+            "sticky",
+            format!("{:.2}", app.simulation.stickiness),
+            app.focus == Focus::Stickiness,
+        ),
+        make_line(
+            "stkgrd",
+            format!("{:.1}", settings.stickiness_gradient),
+            app.focus == Focus::StickyGradient,
+        ),
+        make_line(
+            "tip",
+            format!("{:.1}", settings.tip_stickiness),
+            app.focus == Focus::TipSticky,
+        ),
+        make_line(
+            "walk",
+            format!("{:.1}", settings.walk_step_size),
+            app.focus == Focus::WalkStep,
         ),
     ];
 
@@ -292,7 +358,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
     let key_style = Style::default().fg(HIGHLIGHT_COLOR);
     let desc_style = Style::default().fg(DIM_TEXT_COLOR);
 
-    // Compact format with 1-space indent to align with settings box
+    // Compact system controls only
     let content = vec![
         Line::from(vec![
             Span::raw(" "),
@@ -304,49 +370,28 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(vec![
             Span::raw(" "),
             Span::styled("Q", key_style),
-            Span::styled(" quit ", desc_style),
+            Span::styled(" quit  ", desc_style),
             Span::styled("H/?", key_style),
             Span::styled(" help", desc_style),
         ]),
         Line::from(vec![
             Span::raw(" "),
             Span::styled("V", key_style),
-            Span::styled(" view ", desc_style),
+            Span::styled(" view  ", desc_style),
             Span::styled("1-0", key_style),
             Span::styled(" seeds", desc_style),
         ]),
         Line::from(vec![
             Span::raw(" "),
             Span::styled("+/-", key_style),
-            Span::styled(" speed", desc_style),
+            Span::styled(" speed ", desc_style),
+            Span::styled("[/]", key_style),
+            Span::styled(" hilit", desc_style),
         ]),
         Line::from(vec![
             Span::raw(" "),
-            Span::styled("C", key_style),
-            Span::styled(" colors ", desc_style),
-            Span::styled("A", key_style),
-            Span::styled(" age", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("M", key_style),
-            Span::styled(" mode ", desc_style),
-            Span::styled("N", key_style),
-            Span::styled(" neighbor", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("B", key_style),
-            Span::styled(" bound ", desc_style),
-            Span::styled("S", key_style),
-            Span::styled(" spawn", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("W/E", key_style),
-            Span::styled(" step ", desc_style),
-            Span::styled("I", key_style),
-            Span::styled(" invert", desc_style),
+            Span::styled("Shift+", key_style),
+            Span::styled("letter: params", desc_style),
         ]),
     ];
 
@@ -550,4 +595,64 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         .scroll((app.help_scroll, 0));
 
     frame.render_widget(paragraph, help_area);
+}
+
+/// Render parameter selection popup
+fn render_param_popup(frame: &mut Frame, area: Rect, popup: &ParamPopup) {
+    // Calculate popup size based on content
+    let max_name_len = popup
+        .options
+        .iter()
+        .map(|(_, name)| name.len())
+        .max()
+        .unwrap_or(10);
+
+    let popup_width = (max_name_len as u16 + 6).min(area.width.saturating_sub(4)).max(20);
+    let popup_height = (popup.options.len() as u16 + 2).min(area.height.saturating_sub(4)).max(4);
+
+    // Center the popup
+    let popup_x = area.x + (area.width.saturating_sub(popup_width)) / 2;
+    let popup_y = area.y + (area.height.saturating_sub(popup_height)) / 2;
+
+    let popup_area = Rect {
+        x: popup_x,
+        y: popup_y,
+        width: popup_width,
+        height: popup_height,
+    };
+
+    // Clear the area behind the popup
+    frame.render_widget(Clear, popup_area);
+
+    // Build content with highlighted selection
+    let content: Vec<Line> = popup
+        .options
+        .iter()
+        .enumerate()
+        .map(|(idx, (_, name))| {
+            let is_selected = idx == popup.selected_idx;
+            let prefix = if is_selected { "> " } else { "  " };
+            let style = if is_selected {
+                Style::default()
+                    .fg(HIGHLIGHT_COLOR)
+                    .add_modifier(Modifier::BOLD)
+            } else {
+                Style::default().fg(TEXT_COLOR)
+            };
+            Line::from(Span::styled(format!("{}{}", prefix, name), style))
+        })
+        .collect();
+
+    let title = format!(" Shift+{} ", popup.letter);
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double)
+        .border_style(Style::default().fg(HIGHLIGHT_COLOR))
+        .title(title);
+
+    let paragraph = Paragraph::new(content)
+        .block(block)
+        .alignment(Alignment::Left);
+
+    frame.render_widget(paragraph, popup_area);
 }

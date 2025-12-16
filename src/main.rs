@@ -121,11 +121,37 @@ fn run_app<B: ratatui::backend::Backend>(
                         return Ok(());
                     }
 
-                    // Process key events
+                    // === Handle popup keys first (if popup is open) ===
+                    if app.param_popup.is_some() {
+                        match key.code {
+                            KeyCode::Up => app.popup_nav_up(),
+                            KeyCode::Down => app.popup_nav_down(),
+                            KeyCode::Enter => app.confirm_param_popup(),
+                            KeyCode::Esc => app.close_param_popup(),
+                            _ => {}
+                        }
+                        continue;
+                    }
+
+                    // === Handle Shift+letter to open popup ===
+                    if key.modifiers.contains(KeyModifiers::SHIFT) {
+                        if let KeyCode::Char(c) = key.code {
+                            // Only open popup for letters (not symbols)
+                            if c.is_ascii_alphabetic() {
+                                app.open_param_popup(c);
+                                continue;
+                            }
+                        }
+                    }
+
+                    // === Process normal key events ===
                     match key.code {
+                        // System controls
                         KeyCode::Char('q') | KeyCode::Char('Q') => return Ok(()),
                         KeyCode::Char(' ') => app.toggle_pause(),
                         KeyCode::Char('r') | KeyCode::Char('R') => app.reset(),
+                        KeyCode::Char('v') | KeyCode::Char('V') => app.toggle_fullscreen(),
+                        KeyCode::Char('h') | KeyCode::Char('H') | KeyCode::Char('?') => app.toggle_help(),
                         KeyCode::Char('1') => app.set_seed_pattern(SeedPattern::Point),
                         KeyCode::Char('2') => app.set_seed_pattern(SeedPattern::Line),
                         KeyCode::Char('3') => app.set_seed_pattern(SeedPattern::Cross),
@@ -136,16 +162,29 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Char('8') => app.set_seed_pattern(SeedPattern::Starburst),
                         KeyCode::Char('9') => app.set_seed_pattern(SeedPattern::NoisePatch),
                         KeyCode::Char('0') => app.set_seed_pattern(SeedPattern::Scatter),
+                        KeyCode::Char('+') | KeyCode::Char('=') => {
+                            app.increase_speed();
+                            app.focus = Focus::Speed;
+                        }
+                        KeyCode::Char('-') | KeyCode::Char('_') => {
+                            app.decrease_speed();
+                            app.focus = Focus::Speed;
+                        }
+                        KeyCode::Char('[') => {
+                            app.adjust_highlight(-5);
+                            app.focus = Focus::Highlight;
+                        }
+                        KeyCode::Char(']') => {
+                            app.adjust_highlight(5);
+                            app.focus = Focus::Highlight;
+                        }
+
+                        // Original cycling keys (non-shift)
                         KeyCode::Char('c') | KeyCode::Char('C') => {
                             app.cycle_color_scheme();
                             app.focus = Focus::ColorScheme;
                         }
                         KeyCode::Char('a') | KeyCode::Char('A') => app.toggle_color_by_age(),
-                        KeyCode::Char('v') | KeyCode::Char('V') => app.toggle_fullscreen(),
-                        KeyCode::Char('h') | KeyCode::Char('H') | KeyCode::Char('?') => {
-                            app.toggle_help()
-                        }
-                        // New settings controls - also set focus to the relevant parameter
                         KeyCode::Char('m') | KeyCode::Char('M') => {
                             app.cycle_color_mode();
                             app.focus = Focus::Mode;
@@ -174,14 +213,8 @@ fn run_app<B: ratatui::backend::Backend>(
                             app.adjust_walk_step(-0.5);
                             app.focus = Focus::WalkStep;
                         }
-                        KeyCode::Char('[') => {
-                            app.adjust_highlight(-5);
-                            app.focus = Focus::Highlight;
-                        }
-                        KeyCode::Char(']') => {
-                            app.adjust_highlight(5);
-                            app.focus = Focus::Highlight;
-                        }
+
+                        // Navigation
                         KeyCode::Tab => app.next_focus(),
                         KeyCode::BackTab => app.prev_focus(),
                         KeyCode::Up => {
@@ -189,7 +222,6 @@ fn run_app<B: ratatui::backend::Backend>(
                                 if app.focus.is_param() {
                                     app.adjust_focused_up();
                                 } else {
-                                    // When None or Controls, scroll controls box
                                     app.scroll_controls_up();
                                 }
                             }
@@ -199,21 +231,11 @@ fn run_app<B: ratatui::backend::Backend>(
                                 if app.focus.is_param() {
                                     app.adjust_focused_down();
                                 } else {
-                                    // When None or Controls, scroll controls box
-                                    // max_scroll = content_lines - visible_lines (dynamic)
                                     let term_size = terminal.size().unwrap_or_default();
                                     let visible = ui::get_controls_visible_lines(term_size.height);
                                     app.scroll_controls_down(ui::CONTROLS_CONTENT_LINES.saturating_sub(visible));
                                 }
                             }
-                        }
-                        KeyCode::Char('+') | KeyCode::Char('=') => {
-                            app.increase_speed();
-                            app.focus = Focus::Speed;
-                        }
-                        KeyCode::Char('-') | KeyCode::Char('_') => {
-                            app.decrease_speed();
-                            app.focus = Focus::Speed;
                         }
                         KeyCode::Esc => {
                             if app.show_help {
