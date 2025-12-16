@@ -733,7 +733,7 @@ fn render_param_popup(frame: &mut Frame, area: Rect, popup: &ParamPopup) {
         })
         .collect();
 
-    let title =  " Lookup ".to_string();
+    let title = " Lookup (Enter/Esc) ";
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Double)
