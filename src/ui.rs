@@ -1,14 +1,23 @@
-use crate::app::{App, Focus};
+use crate::app::{App, Focus, ParamPopup};
 use crate::braille;
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
     Frame,
 };
 
 const SIDEBAR_WIDTH: u16 = 22;
+
+/// Max scroll for help content (generous to account for text wrapping on small screens)
+pub const HELP_CONTENT_LINES: u16 = 70;
+
+/// Number of lines in controls content (4 main + 18 Shift+letter hints)
+pub const CONTROLS_CONTENT_LINES: u16 = 22;
+
+/// Number of lines in parameters content
+pub const PARAMS_CONTENT_LINES: u16 = 24;
 
 // UI color scheme
 const BORDER_COLOR: Color = Color::Cyan;
@@ -42,7 +51,12 @@ pub fn render(frame: &mut Frame, app: &App) {
     }
 
     if app.show_help {
-        render_help_overlay(frame, area);
+        render_help_overlay(frame, area, app);
+    }
+
+    // Render param popup if open
+    if let Some(popup) = &app.param_popup {
+        render_param_popup(frame, area, popup);
     }
 }
 
@@ -57,19 +71,80 @@ pub fn get_canvas_size(frame_area: Rect, fullscreen: bool) -> (u16, u16) {
     }
 }
 
+/// Calculate the number of visible lines in the controls box based on terminal height
+pub fn get_controls_visible_lines(terminal_height: u16) -> u16 {
+    const STATUS_HEIGHT: u16 = 5;
+    const NAV_HEIGHT: u16 = 4;
+    const MIN_CONTROLS_VISIBLE: u16 = 4;
+    const BORDERS: u16 = 2;
+
+    let fixed_height = STATUS_HEIGHT + NAV_HEIGHT;
+    let available = terminal_height.saturating_sub(fixed_height);
+
+    let params_ideal = PARAMS_CONTENT_LINES + BORDERS; // 14
+    let controls_min = MIN_CONTROLS_VISIBLE + BORDERS; // 5
+    let controls_max = CONTROLS_CONTENT_LINES + BORDERS; // 10
+
+    let controls_height = if available < params_ideal + controls_min {
+        controls_min.min(available)
+    } else {
+        let extra = available - params_ideal - controls_min;
+        let controls_extra = extra.min(controls_max - controls_min);
+        controls_min + controls_extra
+    };
+
+    // Visible lines = height - borders
+    controls_height.saturating_sub(BORDERS)
+}
+
 fn render_sidebar(frame: &mut Frame, area: Rect, app: &App) {
+    // Fixed component heights
+    const STATUS_HEIGHT: u16 = 5;
+    const NAV_HEIGHT: u16 = 4;
+    const MIN_CONTROLS_VISIBLE: u16 = 4;
+    const BORDERS: u16 = 2;
+
+    let fixed_height = STATUS_HEIGHT + NAV_HEIGHT;
+    let available = area.height.saturating_sub(fixed_height);
+
+    // Calculate ideal heights (content + borders)
+    let params_ideal = PARAMS_CONTENT_LINES + BORDERS; // 14
+    let controls_min = MIN_CONTROLS_VISIBLE + BORDERS; // 5
+    let controls_max = CONTROLS_CONTENT_LINES + BORDERS; // 10
+
+    // Allocate space with priority:
+    // 1. Parameters needs its content (no whitespace) - up to 14
+    // 2. Controls expands from 3 to 8 visible lines
+    // 3. Remaining whitespace goes to Parameters
+    let (params_height, controls_height) = if available < params_ideal + controls_min {
+        // Not enough space - give controls its minimum, params gets the rest
+        let controls_h = controls_min.min(available);
+        let params_h = available.saturating_sub(controls_h).max(4);
+        (params_h, controls_h)
+    } else {
+        // Enough for params ideal + controls min, see how much extra we have
+        let extra = available - params_ideal - controls_min;
+        // Controls gets extra up to its max (8 visible lines)
+        let controls_extra = extra.min(controls_max - controls_min);
+        // Any remainder goes to params as whitespace
+        let params_extra = extra.saturating_sub(controls_extra);
+        (params_ideal + params_extra, controls_min + controls_extra)
+    };
+
     let sections = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(5),  // Status
-            Constraint::Length(9),  // Parameters
-            Constraint::Min(10),    // Controls
+            Constraint::Length(STATUS_HEIGHT),   // Status - fixed
+            Constraint::Length(params_height),   // Parameters - dynamic
+            Constraint::Length(controls_height), // Controls - dynamic (3-8 visible lines)
+            Constraint::Length(NAV_HEIGHT),      // Nav - fixed
         ])
         .split(area);
 
     render_status_box(frame, sections[0], app);
     render_params_box(frame, sections[1], app);
     render_controls_box(frame, sections[2], app);
+    render_nav_box(frame, sections[3], app);
 }
 
 fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
@@ -115,10 +190,21 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
-    let block = styled_block(" Parameters ");
+    let is_focused = app.focus.is_param();
+    let border_color = if is_focused { HIGHLIGHT_COLOR } else { BORDER_COLOR };
+    let title = if is_focused {
+        " Params (↑↓ adjust)"
+    } else {
+        " Params "
+    };
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(border_color))
+        .title(title);
 
     let make_line = |label: &str, value: String, focused: bool| {
-        let prefix = if focused { "> " } else { "  " };
+        let prefix = if focused { ">" } else { " " };
         let style = if focused {
             Style::default().fg(HIGHLIGHT_COLOR)
         } else {
@@ -127,81 +213,323 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled(format!("{}{}: {}", prefix, label, value), style))
     };
 
+    let settings = &app.simulation.settings;
+
+    // Alphabetically ordered parameters
     let content = vec![
         make_line(
-            "Sticky",
-            format!("{:.2}", app.simulation.stickiness),
-            app.focus == Focus::Stickiness,
+            "age",
+            if app.color_by_age { "on" } else { "off" }.to_string(),
+            app.focus == Focus::Age,
         ),
         make_line(
-            "Particles",
+            "bound",
+            settings.boundary_behavior.name().to_lowercase(),
+            app.focus == Focus::Boundary,
+        ),
+        make_line(
+            "color",
+            app.color_scheme.name().to_lowercase(),
+            app.focus == Focus::ColorScheme,
+        ),
+        make_line(
+            "direction",
+            format!("{:.0}°", settings.walk_bias_angle),
+            app.focus == Focus::Direction,
+        ),
+        make_line(
+            "escape",
+            format!("{:.1}", settings.escape_multiplier),
+            app.focus == Focus::EscapeMult,
+        ),
+        make_line(
+            "force",
+            format!("{:.2}", settings.walk_bias_strength),
+            app.focus == Focus::Force,
+        ),
+        make_line(
+            "highlight",
+            format!("{}", settings.highlight_recent),
+            app.focus == Focus::Highlight,
+        ),
+        make_line(
+            "invert",
+            if settings.invert_colors { "on" } else { "off" }.to_string(),
+            app.focus == Focus::Invert,
+        ),
+        make_line(
+            "maxsteps",
+            format!("{}", settings.max_walk_iterations),
+            app.focus == Focus::MaxIterations,
+        ),
+        make_line(
+            "minradius",
+            format!("{:.0}", settings.min_spawn_radius),
+            app.focus == Focus::MinRadius,
+        ),
+        make_line(
+            "mode",
+            settings.color_mode.name().to_lowercase(),
+            app.focus == Focus::Mode,
+        ),
+        make_line(
+            "contacts",
+            format!("{}", settings.multi_contact_min),
+            app.focus == Focus::MultiContact,
+        ),
+        make_line(
+            "neighbors",
+            settings.neighborhood.short_name().to_lowercase(),
+            app.focus == Focus::Neighborhood,
+        ),
+        make_line(
+            "particles",
             format!("{}", app.simulation.num_particles),
             app.focus == Focus::Particles,
         ),
         make_line(
-            "Seed",
-            app.simulation.seed_pattern.name().to_string(),
+            "radial",
+            format!("{:.2}", settings.radial_bias),
+            app.focus == Focus::RadialBias,
+        ),
+        make_line(
+            "seed",
+            app.simulation.seed_pattern.name().to_lowercase(),
             app.focus == Focus::Seed,
         ),
         make_line(
-            "Color",
-            app.color_scheme.name().to_string(),
-            app.focus == Focus::ColorScheme,
+            "sidestick",
+            format!("{:.1}", settings.side_stickiness),
+            app.focus == Focus::SideSticky,
         ),
         make_line(
-            "Speed",
+            "spawn",
+            settings.spawn_mode.name().to_lowercase(),
+            app.focus == Focus::Spawn,
+        ),
+        make_line(
+            "spawnoff",
+            format!("{:.0}", settings.spawn_radius_offset),
+            app.focus == Focus::SpawnOffset,
+        ),
+        make_line(
+            "speed",
             format!("{}", app.steps_per_frame),
             app.focus == Focus::Speed,
         ),
-        Line::from(Span::styled(
-            format!("  Age Color: {}", if app.color_by_age { "ON" } else { "OFF" }),
-            Style::default().fg(DIM_TEXT_COLOR),
-        )),
+        make_line(
+            "sticky",
+            format!("{:.2}", app.simulation.stickiness),
+            app.focus == Focus::Stickiness,
+        ),
+        make_line(
+            "gradient",
+            format!("{:.1}", settings.stickiness_gradient),
+            app.focus == Focus::StickyGradient,
+        ),
+        make_line(
+            "tipstick",
+            format!("{:.1}", settings.tip_stickiness),
+            app.focus == Focus::TipSticky,
+        ),
+        make_line(
+            "walk",
+            format!("{:.1}", settings.walk_step_size),
+            app.focus == Focus::WalkStep,
+        ),
     ];
 
-    let paragraph = Paragraph::new(content).block(block);
+    // Calculate scroll to keep focused item visible based on actual area
+    let focus_line = app.focus.line_index();
+    let visible_height = area.height.saturating_sub(2); // minus borders
+    let content_height = content.len() as u16;
+
+    let scroll = if visible_height == 0 || visible_height >= content_height {
+        0 // No scrolling needed
+    } else if focus_line >= visible_height {
+        // Scroll to show focused line at bottom of visible area
+        focus_line.saturating_sub(visible_height - 1)
+    } else {
+        0 // Focus is within first visible lines
+    };
+
+    let paragraph = Paragraph::new(content)
+        .block(block)
+        .scroll((scroll, 0));
     frame.render_widget(paragraph, area);
 }
 
 fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
-    let block = styled_block(" Controls ");
-
     let key_style = Style::default().fg(HIGHLIGHT_COLOR);
     let desc_style = Style::default().fg(DIM_TEXT_COLOR);
 
-    let make_control = |key: &str, desc: &str| {
+    // Main controls (top 4 lines) + Shift+letter hints below
+    let content = vec![
+        // Main controls
         Line::from(vec![
-            Span::styled(format!("{:>6}", key), key_style),
-            Span::styled(format!(" {}", desc), desc_style),
-        ])
-    };
-
-    let mut content = vec![
-        make_control("Space", "pause/resume"),
-        make_control("R", "reset"),
-        make_control("1-0", "seed patterns"),
-        make_control("C", "cycle color"),
-        make_control("A", "toggle age color"),
-        make_control("Tab", "next param"),
-        make_control("↑/↓", "adjust param"),
-        make_control("+/-", "speed"),
-        make_control("V", "fullscreen"),
-        make_control("H/?", "help"),
-        make_control("Q", "quit"),
+            Span::raw(" "),
+            Span::styled("Spc", key_style),
+            Span::styled(" pause ", desc_style),
+            Span::styled("R", key_style),
+            Span::styled(" reset", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Q", key_style),
+            Span::styled(" quit  ", desc_style),
+            Span::styled("H", key_style),
+            Span::styled(" help", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("V", key_style),
+            Span::styled(" view  ", desc_style),
+            Span::styled("1-0", key_style),
+            Span::styled(" seeds", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+?:", key_style),
+            Span::styled(" lookup", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+Tab:", key_style),
+            Span::styled(" prev", desc_style),
+        ]),
+        // Shift+letter hints (alphabetical)
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+A:", key_style),
+            Span::styled(" age", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+B:", key_style),
+            Span::styled(" bound", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+C:", key_style),
+            Span::styled(" color", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+D:", key_style),
+            Span::styled(" direction", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+E:", key_style),
+            Span::styled(" escape", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+F:", key_style),
+            Span::styled(" force", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+G:", key_style),
+            Span::styled(" gradient", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+H:", key_style),
+            Span::styled(" highlight", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+I:", key_style),
+            Span::styled(" invert", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+M:", key_style),
+            Span::styled(" 4 options", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+N:", key_style),
+            Span::styled(" neighbors", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+O:", key_style),
+            Span::styled(" offset", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+P:", key_style),
+            Span::styled(" particles", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+R:", key_style),
+            Span::styled(" radial", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+S:", key_style),
+            Span::styled(" 5 options", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+T:", key_style),
+            Span::styled(" tip", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+W:", key_style),
+            Span::styled(" walk", desc_style),
+        ]),
     ];
 
-    // Show current focus hint
-    if app.focus != Focus::None {
-        content.push(Line::from(""));
-        content.push(Line::from(Span::styled(
-            format!("Editing: {:?}", app.focus),
-            Style::default().fg(HIGHLIGHT_COLOR),
-        )));
-    }
+    let is_focused = app.focus == Focus::Controls;
+
+    let title = if is_focused {
+        " Controls (↑↓) "
+    } else {
+        " Controls "
+    };
+
+    let border_color = if is_focused { HIGHLIGHT_COLOR } else { BORDER_COLOR };
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(border_color))
+        .title(title);
 
     let paragraph = Paragraph::new(content)
         .block(block)
-        .wrap(Wrap { trim: true });
+        .scroll((app.controls_scroll, 0));
+    frame.render_widget(paragraph, area);
+}
+
+fn render_nav_box(frame: &mut Frame, area: Rect, _app: &App) {
+    let key_style = Style::default().fg(HIGHLIGHT_COLOR);
+    let desc_style = Style::default().fg(DIM_TEXT_COLOR);
+
+    let content = vec![
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Tab", key_style),
+            Span::styled(" Parameters", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Esc", key_style),
+            Span::styled(" Controls", desc_style),
+        ]),
+    ];
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(BORDER_COLOR))
+        .title(" Focus ");
+
+    let paragraph = Paragraph::new(content).block(block);
     frame.render_widget(paragraph, area);
 }
 
@@ -211,13 +539,19 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
     let inner = block.inner(area);
     frame.render_widget(block, area);
 
-    // Render Braille pattern
+    // Get settings for rendering
+    let settings = &app.simulation.settings;
+
+    // Render Braille pattern (uses LUT for fast color lookup)
     let cells = braille::render_to_braille(
         &app.simulation,
         inner.width,
         inner.height,
-        &app.color_scheme,
+        &app.color_lut,
         app.color_by_age,
+        settings.color_mode,
+        settings.highlight_recent,
+        settings.invert_colors,
     );
 
     for cell in cells {
@@ -238,11 +572,19 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
     }
 }
 
-fn render_help_overlay(frame: &mut Frame, area: Rect) {
-    // Center the help dialog
-    let help_width = 54.min(area.width.saturating_sub(4));
-    let help_height = 26.min(area.height.saturating_sub(4));
-    let x = (area.width.saturating_sub(help_width)) / 2;
+fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
+    // Calculate the canvas area (exclude sidebar unless fullscreen)
+    let canvas_x = if app.fullscreen_mode { 0 } else { SIDEBAR_WIDTH };
+    let canvas_width = if app.fullscreen_mode {
+        area.width
+    } else {
+        area.width.saturating_sub(SIDEBAR_WIDTH)
+    };
+
+    // Center the help dialog within the canvas
+    let help_width = 56.min(canvas_width.saturating_sub(4));
+    let help_height = area.height.saturating_sub(4).min(40);
+    let x = canvas_x + (canvas_width.saturating_sub(help_width)) / 2;
     let y = (area.height.saturating_sub(help_height)) / 2;
 
     let help_area = Rect {
@@ -255,38 +597,169 @@ fn render_help_overlay(frame: &mut Frame, area: Rect) {
     // Clear the background
     frame.render_widget(Clear, help_area);
 
-    // Help overlay uses distinct styling (Double border, Yellow) to stand out
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Double)
-        .border_style(Style::default().fg(HIGHLIGHT_COLOR))
-        .title(" Help - Press H or ? to close ");
-
+    // Build expanded help content (formatted for wrapping)
     let content = vec![
         Line::from(""),
         Line::from(Span::styled("DIFFUSION-LIMITED AGGREGATION", Style::default().fg(BORDER_COLOR))),
         Line::from(""),
-        Line::from("DLA simulates particles randomly walking"),
-        Line::from("until they stick to a growing structure,"),
-        Line::from("creating fractal snowflake-like patterns."),
+        Line::from("Particles randomly walk until they touch and stick to the growing structure, creating fractal patterns."),
         Line::from(""),
-        Line::from(Span::styled("PARAMETERS:", Style::default().fg(HIGHLIGHT_COLOR))),
-        Line::from("  Stickiness: Chance to stick (0.1-1.0)"),
-        Line::from("  Lower = more dendritic branches"),
+        Line::from(Span::styled("BASIC CONTROLS:", Style::default().fg(HIGHLIGHT_COLOR))),
         Line::from(""),
-        Line::from(Span::styled("SEED PATTERNS:", Style::default().fg(HIGHLIGHT_COLOR))),
-        Line::from("  1=Point    2=Line     3=Cross    4=Circle"),
-        Line::from("  5=Ring     6=Block    7=Multi    8=Starburst"),
-        Line::from("  9=Noise    0=Scatter"),
+        Line::from(Span::styled("Space - Pause/Resume", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("R - Reset simulation", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Tab - Next parameter", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Shift+Tab - Previous parameter", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Up/Down - Adjust parameter", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("V - Toggle fullscreen", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Q - Quit", Style::default().fg(TEXT_COLOR))),
         Line::from(""),
-        Line::from(Span::styled("Use Tab to select parameter,", Style::default().fg(DIM_TEXT_COLOR))),
-        Line::from(Span::styled("then ↑/↓ to adjust value.", Style::default().fg(DIM_TEXT_COLOR))),
+        Line::from(Span::styled("PARAMETER POPUP:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(""),
+        Line::from(Span::styled("Shift+? - Open ALL parameters popup", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Shift+letter - Filter by first letter", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Enter - Select from popup", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Esc - Close popup", Style::default().fg(TEXT_COLOR))),
+        Line::from(""),
+        Line::from(Span::styled("QUICK KEYS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(""),
+        Line::from(Span::styled("1-0 - Seed patterns (Point to Scatter)", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("+/- - Adjust speed", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("[/] - Adjust highlight count", Style::default().fg(TEXT_COLOR))),
+        Line::from(""),
+        Line::from(Span::styled("DIRECT PARAM KEYS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(""),
+        Line::from(Span::styled("A - Toggle color-by-age", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("C - Cycle color scheme", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("M - Cycle color mode", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("N - Cycle neighborhood type", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("B - Cycle boundary behavior", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("S - Cycle spawn mode", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("W/E - Walk step size +/-", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("I - Invert colors", Style::default().fg(TEXT_COLOR))),
+        Line::from(""),
+        Line::from(Span::styled("MOVEMENT PARAMETERS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(""),
+        Line::from("Walk Step (0.5-5.0) - Distance per step"),
+        Line::from("Direction (0-360) - Bias angle"),
+        Line::from("Force (0-0.5) - Bias strength"),
+        Line::from("Radial (-0.3 to 0.3) - Inward/outward drift"),
+        Line::from(""),
+        Line::from(Span::styled("STICKING PARAMETERS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(""),
+        Line::from("Stickiness (0.1-1.0) - Base stick chance"),
+        Line::from("Neighborhood - VonNeumann/Moore/Extended"),
+        Line::from("Multi-Contact (1-4) - Min neighbors to stick"),
+        Line::from("Tip/Side Sticky - Stickiness by position"),
+        Line::from("Gradient - Distance-based stickiness"),
+        Line::from(""),
+        Line::from(Span::styled("SPAWN/BOUNDARY:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(""),
+        Line::from("Spawn - Circle/Edges/Corners/Random/Dir"),
+        Line::from("Boundary - Clamp/Wrap/Bounce/Stick/Absorb"),
+        Line::from("Offset/Escape/MinRadius/MaxIter"),
+        Line::from(""),
+        Line::from(Span::styled("VISUAL PARAMETERS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(""),
+        Line::from("Particles (100-10000) - Total count"),
+        Line::from("Speed (1-50) - Steps per frame"),
+        Line::from("Color - 8 schemes, 4 modes"),
+        Line::from("Highlight (0-50) - Recent particles in white"),
+        Line::from(""),
     ];
+
+    let content_height = content.len() as u16;
+    let visible_height = help_height.saturating_sub(2); // minus borders
+    let max_scroll = content_height.saturating_sub(visible_height);
+    let is_scrollable = max_scroll > 0;
+
+    // Update title to show scroll hint if scrollable
+    let title = if is_scrollable {
+        " Help (J/K scroll, H to close) "
+    } else {
+        " Help (H to close) "
+    };
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double)
+        .border_style(Style::default().fg(HIGHLIGHT_COLOR))
+        .title(title);
 
     let paragraph = Paragraph::new(content)
         .block(block)
-        .alignment(Alignment::Center)
-        .wrap(Wrap { trim: true });
+        .wrap(Wrap { trim: true })
+        .scroll((app.help_scroll, 0));
 
     frame.render_widget(paragraph, help_area);
+}
+
+/// Render parameter selection popup
+fn render_param_popup(frame: &mut Frame, area: Rect, popup: &ParamPopup) {
+    // Calculate popup size based on content
+    let max_name_len = popup
+        .options
+        .iter()
+        .map(|(_, name)| name.len())
+        .max()
+        .unwrap_or(10);
+
+    let popup_width = (max_name_len as u16 + 6).min(area.width.saturating_sub(4)).max(20);
+    let popup_height = (popup.options.len() as u16 + 2).min(area.height.saturating_sub(4)).max(3);
+
+    // Center the popup
+    let popup_x = area.x + (area.width.saturating_sub(popup_width)) / 2;
+    let popup_y = area.y + (area.height.saturating_sub(popup_height)) / 2;
+
+    let popup_area = Rect {
+        x: popup_x,
+        y: popup_y,
+        width: popup_width,
+        height: popup_height,
+    };
+
+    // Clear the area behind the popup
+    frame.render_widget(Clear, popup_area);
+
+    // Build content with highlighted selection
+    let content: Vec<Line> = popup
+        .options
+        .iter()
+        .enumerate()
+        .map(|(idx, (_, name))| {
+            let is_selected = idx == popup.selected_idx;
+            let prefix = if is_selected { "> " } else { "  " };
+            let style = if is_selected {
+                Style::default()
+                    .fg(HIGHLIGHT_COLOR)
+                    .add_modifier(Modifier::BOLD)
+            } else {
+                Style::default().fg(TEXT_COLOR)
+            };
+            Line::from(Span::styled(format!("{}{}", prefix, name), style))
+        })
+        .collect();
+
+    // Calculate scroll to keep selection visible
+    let visible_height = popup_height.saturating_sub(2); // minus borders
+    let selected = popup.selected_idx as u16;
+    let scroll = if visible_height == 0 || selected < visible_height {
+        0
+    } else {
+        selected.saturating_sub(visible_height - 1)
+    };
+
+    let title = " Lookup (Enter/Esc) ";
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double)
+        .border_style(Style::default().fg(HIGHLIGHT_COLOR))
+        .title(title);
+
+    let paragraph = Paragraph::new(content)
+        .block(block)
+        .alignment(Alignment::Left)
+        .scroll((scroll, 0));
+
+    frame.render_widget(paragraph, popup_area);
 }
