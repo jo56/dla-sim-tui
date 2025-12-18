@@ -260,16 +260,16 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
         // === Movement (alphabetical: adaptfactor, adaptive, direction, force, lattice, radial, walk) ===
         make_header("Movement"),
         make_line(
-            "adaptfactor",
-            format!("{:.1}", settings.adaptive_step_factor),
-            app.focus == Focus::AdaptiveFactor,
-        ),
-        make_line(
             "adaptive",
             if settings.adaptive_step { "on" } else { "off" }.to_string(),
             app.focus == Focus::AdaptiveStep,
         ),
         make_line(
+            "adapt factor",
+            format!("{:.2}", settings.adaptive_step_factor),
+            app.focus == Focus::AdaptiveFactor,
+        ),
+        make_line(        
             "direction",
             format!("{:.0}°", settings.walk_bias_angle),
             app.focus == Focus::Direction,
@@ -312,17 +312,17 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::Neighborhood,
         ),
         make_line(
-            "sidestick",
-            format!("{:.1}", settings.side_stickiness),
-            app.focus == Focus::SideSticky,
-        ),
-        make_line(
             "sticky",
             format!("{:.2}", app.simulation.stickiness),
             app.focus == Focus::Stickiness,
         ),
         make_line(
-            "tipstick",
+            "side stick",
+            format!("{:.1}", settings.side_stickiness),
+            app.focus == Focus::SideSticky,
+        ),
+        make_line(
+            "tip stick",
             format!("{:.1}", settings.tip_stickiness),
             app.focus == Focus::TipSticky,
         ),
@@ -339,12 +339,12 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::EscapeMult,
         ),
         make_line(
-            "maxsteps",
+            "max steps",
             format!("{}", settings.max_walk_iterations),
             app.focus == Focus::MaxIterations,
         ),
         make_line(
-            "minradius",
+            "min radius",
             format!("{:.0}", settings.min_spawn_radius),
             app.focus == Focus::MinRadius,
         ),
@@ -354,7 +354,7 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
             app.focus == Focus::Spawn,
         ),
         make_line(
-            "spawnoff",
+            "spawn off",
             format!("{:.0}", settings.spawn_radius_offset),
             app.focus == Focus::SpawnOffset,
         ),
