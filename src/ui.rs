@@ -681,18 +681,9 @@ fn render_two_column_params(frame: &mut Frame, area: Rect, app: &App) {
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(inner);
 
-    // Left column: Movement + Sticking
-    render_params_column_left(frame, columns[0], app);
-
-    // Right column: Spawn + Visual
-    render_params_column_right(frame, columns[1], app);
-}
-
-/// Render left column of params (Movement + Sticking)
-fn render_params_column_left(frame: &mut Frame, area: Rect, app: &App) {
     let settings = &app.simulation.settings;
 
-    let make_line = |label: &str, value: String, focused: bool| {
+    let make_line = |label: &str, value: String, focused: bool| -> Line<'_> {
         let prefix = if focused { ">" } else { " " };
         let style = if focused {
             Style::default().fg(HIGHLIGHT_COLOR)
@@ -702,189 +693,124 @@ fn render_params_column_left(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled(format!("{}{}: {}", prefix, label, value), style))
     };
 
-    let make_header = |label: &str| {
+    let make_header = |label: &str| -> Line<'_> {
         Line::from(Span::styled(
             format!("-- {} --", label.to_lowercase()),
             Style::default().fg(DIM_TEXT_COLOR),
         ))
     };
 
-    let content = vec![
-        // Movement group
+    // Left column content: Movement + Sticking (15 lines)
+    let left_content: Vec<Line<'_>> = vec![
         make_header("movement"),
-        make_line(
-            "adaptive",
-            if settings.adaptive_step { "on" } else { "off" }.to_string(),
-            app.focus == Focus::AdaptiveStep,
-        ),
-        make_line(
-            "adapt fact",
-            format!("{:.2}", settings.adaptive_step_factor),
-            app.focus == Focus::AdaptiveFactor,
-        ),
-        make_line(
-            "direction",
-            format!("{:.0}°", settings.walk_bias_angle),
-            app.focus == Focus::Direction,
-        ),
-        make_line(
-            "force",
-            format!("{:.2}", settings.walk_bias_strength),
-            app.focus == Focus::Force,
-        ),
-        make_line(
-            "lattice",
-            if settings.lattice_walk { "on" } else { "off" }.to_string(),
-            app.focus == Focus::LatticeWalk,
-        ),
-        make_line(
-            "radial",
-            format!("{:.2}", settings.radial_bias),
-            app.focus == Focus::RadialBias,
-        ),
-        make_line(
-            "walk",
-            format!("{:.1}", settings.walk_step_size),
-            app.focus == Focus::WalkStep,
-        ),
-        // Sticking group
+        make_line("adaptive", if settings.adaptive_step { "on" } else { "off" }.to_string(), app.focus == Focus::AdaptiveStep),
+        make_line("adapt fact", format!("{:.2}", settings.adaptive_step_factor), app.focus == Focus::AdaptiveFactor),
+        make_line("direction", format!("{:.0}°", settings.walk_bias_angle), app.focus == Focus::Direction),
+        make_line("force", format!("{:.2}", settings.walk_bias_strength), app.focus == Focus::Force),
+        make_line("lattice", if settings.lattice_walk { "on" } else { "off" }.to_string(), app.focus == Focus::LatticeWalk),
+        make_line("radial", format!("{:.2}", settings.radial_bias), app.focus == Focus::RadialBias),
+        make_line("walk", format!("{:.1}", settings.walk_step_size), app.focus == Focus::WalkStep),
         make_header("sticking"),
-        make_line(
-            "contacts",
-            format!("{}", settings.multi_contact_min),
-            app.focus == Focus::MultiContact,
-        ),
-        make_line(
-            "gradient",
-            format!("{:.1}", settings.stickiness_gradient),
-            app.focus == Focus::StickyGradient,
-        ),
-        make_line(
-            "neighbors",
-            settings.neighborhood.short_name().to_lowercase(),
-            app.focus == Focus::Neighborhood,
-        ),
-        make_line(
-            "sticky",
-            format!("{:.2}", app.simulation.stickiness),
-            app.focus == Focus::Stickiness,
-        ),
-        make_line(
-            "side",
-            format!("{:.1}", settings.side_stickiness),
-            app.focus == Focus::SideSticky,
-        ),
-        make_line(
-            "tip",
-            format!("{:.1}", settings.tip_stickiness),
-            app.focus == Focus::TipSticky,
-        ),
+        make_line("contacts", format!("{}", settings.multi_contact_min), app.focus == Focus::MultiContact),
+        make_line("gradient", format!("{:.1}", settings.stickiness_gradient), app.focus == Focus::StickyGradient),
+        make_line("neighbors", settings.neighborhood.short_name().to_lowercase(), app.focus == Focus::Neighborhood),
+        make_line("sticky", format!("{:.2}", app.simulation.stickiness), app.focus == Focus::Stickiness),
+        make_line("side", format!("{:.1}", settings.side_stickiness), app.focus == Focus::SideSticky),
+        make_line("tip", format!("{:.1}", settings.tip_stickiness), app.focus == Focus::TipSticky),
     ];
 
-    let paragraph = Paragraph::new(content);
-    frame.render_widget(paragraph, area);
-}
-
-/// Render right column of params (Spawn + Visual)
-fn render_params_column_right(frame: &mut Frame, area: Rect, app: &App) {
-    let settings = &app.simulation.settings;
-
-    let make_line = |label: &str, value: String, focused: bool| {
-        let prefix = if focused { ">" } else { " " };
-        let style = if focused {
-            Style::default().fg(HIGHLIGHT_COLOR)
-        } else {
-            Style::default().fg(TEXT_COLOR)
-        };
-        Line::from(Span::styled(format!("{}{}: {}", prefix, label, value), style))
-    };
-
-    let make_header = |label: &str| {
-        Line::from(Span::styled(
-            format!("-- {} --", label.to_lowercase()),
-            Style::default().fg(DIM_TEXT_COLOR),
-        ))
-    };
-
-    let content = vec![
-        // Spawn group
+    // Right column content: Spawn + Visual (16 lines)
+    let right_content: Vec<Line<'_>> = vec![
         make_header("spawn"),
-        make_line(
-            "bound",
-            settings.boundary_behavior.name().to_lowercase(),
-            app.focus == Focus::Boundary,
-        ),
-        make_line(
-            "escape",
-            format!("{:.1}", settings.escape_multiplier),
-            app.focus == Focus::EscapeMult,
-        ),
-        make_line(
-            "max steps",
-            format!("{}", settings.max_walk_iterations),
-            app.focus == Focus::MaxIterations,
-        ),
-        make_line(
-            "min radius",
-            format!("{:.0}", settings.min_spawn_radius),
-            app.focus == Focus::MinRadius,
-        ),
-        make_line(
-            "spawn",
-            settings.spawn_mode.name().to_lowercase(),
-            app.focus == Focus::Spawn,
-        ),
-        make_line(
-            "spawn off",
-            format!("{:.0}", settings.spawn_radius_offset),
-            app.focus == Focus::SpawnOffset,
-        ),
-        // Visual group
+        make_line("bound", settings.boundary_behavior.name().to_lowercase(), app.focus == Focus::Boundary),
+        make_line("escape", format!("{:.1}", settings.escape_multiplier), app.focus == Focus::EscapeMult),
+        make_line("max steps", format!("{}", settings.max_walk_iterations), app.focus == Focus::MaxIterations),
+        make_line("min radius", format!("{:.0}", settings.min_spawn_radius), app.focus == Focus::MinRadius),
+        make_line("spawn", settings.spawn_mode.name().to_lowercase(), app.focus == Focus::Spawn),
+        make_line("spawn off", format!("{:.0}", settings.spawn_radius_offset), app.focus == Focus::SpawnOffset),
         make_header("visual"),
-        make_line(
-            "age",
-            if app.color_by_age { "on" } else { "off" }.to_string(),
-            app.focus == Focus::Age,
-        ),
-        make_line(
-            "color",
-            app.color_scheme.name().to_lowercase(),
-            app.focus == Focus::ColorScheme,
-        ),
-        make_line(
-            "highlight",
-            format!("{}", settings.highlight_recent),
-            app.focus == Focus::Highlight,
-        ),
-        make_line(
-            "invert",
-            if settings.invert_colors { "on" } else { "off" }.to_string(),
-            app.focus == Focus::Invert,
-        ),
-        make_line(
-            "mode",
-            settings.color_mode.name().to_lowercase(),
-            app.focus == Focus::Mode,
-        ),
-        make_line(
-            "particles",
-            format!("{}", app.simulation.num_particles),
-            app.focus == Focus::Particles,
-        ),
-        make_line(
-            "seed",
-            app.simulation.seed_pattern.name().to_lowercase(),
-            app.focus == Focus::Seed,
-        ),
-        make_line(
-            "speed",
-            format!("{}", app.steps_per_frame),
-            app.focus == Focus::Speed,
-        ),
+        make_line("age", if app.color_by_age { "on" } else { "off" }.to_string(), app.focus == Focus::Age),
+        make_line("color", app.color_scheme.name().to_lowercase(), app.focus == Focus::ColorScheme),
+        make_line("highlight", format!("{}", settings.highlight_recent), app.focus == Focus::Highlight),
+        make_line("invert", if settings.invert_colors { "on" } else { "off" }.to_string(), app.focus == Focus::Invert),
+        make_line("mode", settings.color_mode.name().to_lowercase(), app.focus == Focus::Mode),
+        make_line("particles", format!("{}", app.simulation.num_particles), app.focus == Focus::Particles),
+        make_line("seed", app.simulation.seed_pattern.name().to_lowercase(), app.focus == Focus::Seed),
+        make_line("speed", format!("{}", app.steps_per_frame), app.focus == Focus::Speed),
     ];
 
-    let paragraph = Paragraph::new(content);
-    frame.render_widget(paragraph, area);
+    // Calculate scroll for left column based on focused line (Movement + Sticking params)
+    let left_focus_line: Option<u16> = match app.focus {
+        Focus::AdaptiveStep => Some(1),
+        Focus::AdaptiveFactor => Some(2),
+        Focus::Direction => Some(3),
+        Focus::Force => Some(4),
+        Focus::LatticeWalk => Some(5),
+        Focus::RadialBias => Some(6),
+        Focus::WalkStep => Some(7),
+        Focus::MultiContact => Some(9),
+        Focus::StickyGradient => Some(10),
+        Focus::Neighborhood => Some(11),
+        Focus::Stickiness => Some(12),
+        Focus::SideSticky => Some(13),
+        Focus::TipSticky => Some(14),
+        _ => None,
+    };
+
+    // Calculate scroll for right column based on focused line (Spawn + Visual params)
+    let right_focus_line: Option<u16> = match app.focus {
+        Focus::Boundary => Some(1),
+        Focus::EscapeMult => Some(2),
+        Focus::MaxIterations => Some(3),
+        Focus::MinRadius => Some(4),
+        Focus::Spawn => Some(5),
+        Focus::SpawnOffset => Some(6),
+        Focus::Age => Some(8),
+        Focus::ColorScheme => Some(9),
+        Focus::Highlight => Some(10),
+        Focus::Invert => Some(11),
+        Focus::Mode => Some(12),
+        Focus::Particles => Some(13),
+        Focus::Seed => Some(14),
+        Focus::Speed => Some(15),
+        _ => None,
+    };
+
+    // Render left column with scroll
+    let left_visible = columns[0].height;
+    let left_content_len = left_content.len() as u16;
+    let left_scroll = if let Some(focus_line) = left_focus_line {
+        if left_visible == 0 || left_visible >= left_content_len {
+            0
+        } else if focus_line >= left_visible {
+            focus_line.saturating_sub(left_visible - 1)
+        } else {
+            0
+        }
+    } else {
+        0
+    };
+
+    let left_paragraph = Paragraph::new(left_content).scroll((left_scroll, 0));
+    frame.render_widget(left_paragraph, columns[0]);
+
+    // Render right column with scroll
+    let right_visible = columns[1].height;
+    let right_content_len = right_content.len() as u16;
+    let right_scroll = if let Some(focus_line) = right_focus_line {
+        if right_visible == 0 || right_visible >= right_content_len {
+            0
+        } else if focus_line >= right_visible {
+            focus_line.saturating_sub(right_visible - 1)
+        } else {
+            0
+        }
+    } else {
+        0
+    };
+
+    let right_paragraph = Paragraph::new(right_content).scroll((right_scroll, 0));
+    frame.render_widget(right_paragraph, columns[1]);
 }
 
 /// Compact controls box for States mode
