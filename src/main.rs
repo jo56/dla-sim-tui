@@ -8,7 +8,7 @@ mod settings;
 mod simulation;
 mod ui;
 
-use app::{App, Focus};
+use app::{App, Focus, ViewMode};
 use clap::{CommandFactory, FromArgMatches, Parser};
 use config::AppConfig;
 use crossterm::{
@@ -205,7 +205,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         width: size.width,
         height: size.height,
     };
-    let (canvas_width, canvas_height) = ui::get_canvas_size(frame_rect, false);
+    let (canvas_width, canvas_height) = ui::get_canvas_size(frame_rect, ViewMode::Default);
     let mut app = App::new(canvas_width, canvas_height);
 
     // Apply config file settings first (if loaded)
@@ -496,7 +496,7 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Char('q') | KeyCode::Char('Q') => return Ok(()),
                         KeyCode::Char(' ') => app.toggle_pause(),
                         KeyCode::Char('r') | KeyCode::Char('R') => app.reset(),
-                        KeyCode::Char('v') | KeyCode::Char('V') => app.toggle_fullscreen(),
+                        KeyCode::Char('v') | KeyCode::Char('V') => app.cycle_view_mode(),
                         KeyCode::Char('h') | KeyCode::Char('H') => app.toggle_help(),
                         // Recording toggle (backtick)
                         KeyCode::Char('`') => {
@@ -639,7 +639,7 @@ fn run_app<B: ratatui::backend::Backend>(
                             width,
                             height,
                         },
-                        app.fullscreen_mode,
+                        app.view_mode,
                     );
                     app.resize(canvas_width, canvas_height);
                 }

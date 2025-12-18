@@ -21,7 +21,7 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 - **Multiple seed patterns** - Points, lines, rings, blocks, spokes, scatter/noise blobs and more
 - **8 color schemes** - Ice, Fire, Plasma, Viridis, Rainbow, Grayscale, Ocean, Neon
 - **Parameter popup** - Quick access to any parameter via Shift+letter
-- **Fullscreen mode** - Hide sidebar for maximum canvas size
+- **Three view modes** - Default (sidebar + canvas), States (all params visible), Fullscreen (canvas only)
 - **Config export/import** - Save and load settings as JSON files
 - **Video recording** - Capture simulations as MP4, WebM, or GIF files
 
@@ -188,7 +188,7 @@ If you request `.mp4` or `.webm` but FFmpeg isn't installed, the recording will 
 | `w/s/Up/Down` | Navigate/Scroll |
 | `j/k` | Adjust focused value |
 | `Esc` | Close help / exit focus |
-| `V` | Toggle fullscreen |
+| `V` | Cycle view mode (Default/States/Fullscreen) |
 | `` ` `` | Start/stop recording |
 | `Shift+X` | Export config to file |
 | `H` | Show help (Up/Down to scroll) |
@@ -225,6 +225,16 @@ If you request `.mp4` or `.webm` but FFmpeg isn't installed, the recording will 
 | `Shift+W` | Increase walk step size |
 | `Shift+E` | Decrease walk step size |
 | `I` | Invert colors |
+
+### View Modes
+
+Press `V` to cycle through view modes:
+
+| Mode | Description |
+|------|-------------|
+| Default | Narrow sidebar (22 chars) + large canvas |
+| States | Two-column params panel (48 chars) + smaller canvas - see all 24 parameters at once |
+| Fullscreen | Canvas only, maximum visualization area |
 
 ## Parameters
 

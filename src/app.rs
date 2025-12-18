@@ -52,6 +52,38 @@ impl TextInputPopup {
     }
 }
 
+/// View mode for the UI layout
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub enum ViewMode {
+    /// Default: Narrow sidebar (22 chars) + large canvas
+    #[default]
+    Default,
+    /// States: Wide params panel (two columns) + smaller canvas
+    States,
+    /// Fullscreen: Canvas only, no sidebar
+    Fullscreen,
+}
+
+impl ViewMode {
+    /// Cycle to next view mode
+    pub fn next(&self) -> Self {
+        match self {
+            ViewMode::Default => ViewMode::States,
+            ViewMode::States => ViewMode::Fullscreen,
+            ViewMode::Fullscreen => ViewMode::Default,
+        }
+    }
+
+    /// Get display name for status/help
+    pub fn name(&self) -> &str {
+        match self {
+            ViewMode::Default => "Default",
+            ViewMode::States => "States",
+            ViewMode::Fullscreen => "Fullscreen",
+        }
+    }
+}
+
 /// Focus state for parameter editing in the sidebar
 /// Navigation follows grouped order: Movement → Sticking → Spawn → Visual
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -227,7 +259,7 @@ pub struct App {
     pub color_lut: ColorLut,
     pub color_by_age: bool,
     pub focus: Focus,
-    pub fullscreen_mode: bool,
+    pub view_mode: ViewMode,
     pub steps_per_frame: usize,
     pub show_help: bool,
     pub help_scroll: u16,
@@ -253,7 +285,7 @@ impl App {
             color_scheme,
             color_by_age: true,
             focus: Focus::AdaptiveStep,
-            fullscreen_mode: false,
+            view_mode: ViewMode::Default,
             steps_per_frame: 5,
             show_help: false,
             help_scroll: 0,
@@ -403,9 +435,9 @@ impl App {
         self.color_lut = self.color_scheme.build_lut();
     }
 
-    /// Toggle fullscreen mode
-    pub fn toggle_fullscreen(&mut self) {
-        self.fullscreen_mode = !self.fullscreen_mode;
+    /// Cycle through view modes (Default → States → Fullscreen → Default)
+    pub fn cycle_view_mode(&mut self) {
+        self.view_mode = self.view_mode.next();
     }
 
     /// Toggle help overlay
