@@ -587,7 +587,9 @@ fn run_app<B: ratatui::backend::Backend>(
                         }
                         KeyCode::Down => {
                             if app.show_help {
-                                app.scroll_help_down(ui::HELP_CONTENT_LINES);
+                                let term_size = terminal.size().unwrap_or_default();
+                                let visible = ui::get_help_visible_lines(term_size.height);
+                                app.scroll_help_down(ui::HELP_CONTENT_LINES.saturating_sub(visible));
                             } else if app.focus.is_param() {
                                 app.next_focus();
                             } else {

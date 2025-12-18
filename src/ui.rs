@@ -91,6 +91,14 @@ pub fn get_canvas_size(frame_area: Rect, fullscreen: bool) -> (u16, u16) {
     }
 }
 
+/// Calculate the number of visible lines in the help popup based on terminal height
+pub fn get_help_visible_lines(terminal_height: u16) -> u16 {
+    // Help popup height calculation (from render_help_overlay)
+    let help_height = terminal_height.saturating_sub(4).min(40);
+    // Visible lines = height - borders
+    help_height.saturating_sub(2)
+}
+
 /// Calculate the number of visible lines in the controls box based on terminal height
 pub fn get_controls_visible_lines(terminal_height: u16) -> u16 {
     const STATUS_HEIGHT: u16 = 5;
