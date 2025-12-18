@@ -150,34 +150,47 @@ impl Focus {
         }
     }
 
-    /// Get the line index in the parameters box for this focus (alphabetical order)
+    /// Get the line index in the parameters box for this focus (grouped by type)
     pub fn line_index(&self) -> u16 {
+        // Line indices account for section headers:
+        // 0: -- Movement --
+        // 1-4: walk, direction, force, radial
+        // 5: -- Sticking --
+        // 6-11: sticky, tipstick, sidestick, gradient, neighbors, contacts
+        // 12: -- Spawn --
+        // 13-18: spawn, bound, spawnoff, escape, minradius, maxsteps
+        // 19: -- Visual --
+        // 20-27: mode, color, age, invert, highlight, particles, seed, speed
         match self {
             Focus::None | Focus::Controls => 0,
-            Focus::Age => 0,
-            Focus::Boundary => 1,
-            Focus::ColorScheme => 2,
-            Focus::Direction => 3,
-            Focus::EscapeMult => 4,
-            Focus::Force => 5,
-            Focus::Highlight => 6,
-            Focus::Invert => 7,
-            Focus::MaxIterations => 8,
-            Focus::MinRadius => 9,
-            Focus::Mode => 10,
+            // Movement (after header at line 0)
+            Focus::WalkStep => 1,
+            Focus::Direction => 2,
+            Focus::Force => 3,
+            Focus::RadialBias => 4,
+            // Sticking (after header at line 5)
+            Focus::Stickiness => 6,
+            Focus::TipSticky => 7,
+            Focus::SideSticky => 8,
+            Focus::StickyGradient => 9,
+            Focus::Neighborhood => 10,
             Focus::MultiContact => 11,
-            Focus::Neighborhood => 12,
-            Focus::Particles => 13,
-            Focus::RadialBias => 14,
-            Focus::Seed => 15,
-            Focus::SideSticky => 16,
-            Focus::Spawn => 17,
-            Focus::SpawnOffset => 18,
-            Focus::Speed => 19,
-            Focus::Stickiness => 20,
-            Focus::StickyGradient => 21,
-            Focus::TipSticky => 22,
-            Focus::WalkStep => 23,
+            // Spawn (after header at line 12)
+            Focus::Spawn => 13,
+            Focus::Boundary => 14,
+            Focus::SpawnOffset => 15,
+            Focus::EscapeMult => 16,
+            Focus::MinRadius => 17,
+            Focus::MaxIterations => 18,
+            // Visual (after header at line 19)
+            Focus::Mode => 20,
+            Focus::ColorScheme => 21,
+            Focus::Age => 22,
+            Focus::Invert => 23,
+            Focus::Highlight => 24,
+            Focus::Particles => 25,
+            Focus::Seed => 26,
+            Focus::Speed => 27,
         }
     }
 
