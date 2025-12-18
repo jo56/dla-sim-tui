@@ -616,6 +616,21 @@ impl App {
         }
     }
 
+    /// Jump to first item starting with the given letter in popup
+    pub fn popup_jump_to_letter(&mut self, letter: char) {
+        if let Some(popup) = &mut self.param_popup {
+            let letter = letter.to_ascii_lowercase();
+            // Find the first option that starts with this letter
+            if let Some(idx) = popup
+                .options
+                .iter()
+                .position(|(_, name)| name.to_ascii_lowercase().starts_with(letter))
+            {
+                popup.selected_idx = idx;
+            }
+        }
+    }
+
     // === Export popup methods ===
 
     /// Open export popup with default filename

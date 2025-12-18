@@ -363,6 +363,9 @@ fn run_app<B: ratatui::backend::Backend>(
                             KeyCode::Down => app.popup_nav_down(),
                             KeyCode::Enter => app.confirm_param_popup(),
                             KeyCode::Esc => app.close_param_popup(),
+                            KeyCode::Char(c) if c.is_ascii_alphabetic() => {
+                                app.popup_jump_to_letter(c);
+                            }
                             _ => {}
                         }
                         continue;
