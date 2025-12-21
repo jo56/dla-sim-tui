@@ -43,7 +43,7 @@ struct Args {
     #[arg(long, default_value = "point")]
     seed: String,
 
-    /// Simulation speed (steps per frame, 1-50)
+    /// Simulation speed (steps per frame, 1-100)
     #[arg(long, default_value = "5")]
     speed: usize,
 
@@ -227,7 +227,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         app.simulation.stickiness = args.stickiness.clamp(0.1, 1.0);
     }
     if is_explicit("speed") || base_config.is_none() {
-        app.steps_per_frame = args.speed.clamp(1, 50);
+        app.steps_per_frame = args.speed.clamp(1, 100);
     }
 
     // Movement settings

@@ -317,7 +317,7 @@ impl App {
                 self.color_scheme = self.color_scheme.next();
                 self.color_lut = self.color_scheme.build_lut();
             }
-            Focus::Speed => self.steps_per_frame = (self.steps_per_frame + 1).min(50),
+            Focus::Speed => self.steps_per_frame = (self.steps_per_frame + 1).min(100),
             // Visual
             Focus::Mode => self.cycle_color_mode(),
             Focus::Highlight => self.adjust_highlight(5),
@@ -467,7 +467,7 @@ impl App {
 
     /// Increase simulation speed
     pub fn increase_speed(&mut self) {
-        self.steps_per_frame = (self.steps_per_frame + 1).min(50);
+        self.steps_per_frame = (self.steps_per_frame + 1).min(100);
     }
 
     /// Decrease simulation speed
