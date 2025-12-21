@@ -1,4 +1,4 @@
-# DLA Simulation
+# DLA Sim TUI
 
 A terminal-based Diffusion-Limited Aggregation (DLA) simulation using high-resolution Braille character rendering.
 
@@ -31,24 +31,24 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 
 ```bash
 # Install the latest version
-cargo install --git https://github.com/jo56/dla-simulation
+cargo install --git https://github.com/jo56/dla-sim-tui
 
 # Install a specific release
-cargo install --git https://github.com/jo56/dla-simulation --tag v0.0.1
+cargo install --git https://github.com/jo56/dla-sim-tui --tag v0.0.1
 ```
 
 After installation, run directly:
 
 ```bash
-dla-simulation
+dla-sim-tui
 ```
 
 ### From source
 
 ```bash
 # Clone the repository
-git clone https://github.com/jo56/dla-simulation.git
-cd dla-simulation
+git clone https://github.com/jo56/dla-sim-tui.git
+cd dla-sim-tui
 
 # Build and run
 cargo run --release
@@ -58,8 +58,8 @@ cargo run --release
 
 ```bash
 # If installed via cargo install:
-dla-simulation
-dla-simulation --particles 3000 --stickiness 0.5 --seed circle --speed 10
+dla-sim-tui
+dla-sim-tui --particles 3000 --stickiness 0.5 --seed circle --speed 10
 
 # If running from source:
 cargo run --release
@@ -125,19 +125,19 @@ cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 1
 
 ```bash
 # Classic DLA with higher stickiness at tips (creates bushier growth)
-dla-simulation --tip-stickiness 1.0 --side-stickiness 0.3
+dla-sim-tui --tip-stickiness 1.0 --side-stickiness 0.3
 
 # Directional growth from top edge
-dla-simulation --spawn-mode top --walk-angle 270 --walk-force 0.2
+dla-sim-tui --spawn-mode top --walk-angle 270 --walk-force 0.2
 
 # Dense blob-like growth
-dla-simulation --neighborhood extended --multi-contact 2
+dla-sim-tui --neighborhood extended --multi-contact 2
 
 # Toroidal boundary with random spawning
-dla-simulation --boundary wrap --spawn-mode random
+dla-sim-tui --boundary wrap --spawn-mode random
 
 # Color by approach direction with inverted gradient
-dla-simulation --color-mode direction --invert
+dla-sim-tui --color-mode direction --invert
 ```
 
 ### Config Files
@@ -146,10 +146,10 @@ Export your current settings to a JSON file by pressing `Shift+X` while running.
 
 ```bash
 # Load settings from a config file
-dla-simulation --config my-settings.json
+dla-sim-tui --config my-settings.json
 
 # CLI args override config file values
-dla-simulation --config my-settings.json --particles 1000
+dla-sim-tui --config my-settings.json --particles 1000
 
 # Export: While running, press Shift+X, enter filename, press Enter
 ```

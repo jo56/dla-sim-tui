@@ -191,7 +191,7 @@ fn render_sidebar(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
-    let block = styled_block(" DLA Simulation ");
+    let block = styled_block(" DLA Sim TUI ");
 
     let progress = app.simulation.progress();
     let progress_width = (area.width.saturating_sub(4)) as usize;

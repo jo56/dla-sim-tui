@@ -444,7 +444,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dla-simulation"
+name = "dla-sim-tui"
 version = "0.0.4"
 dependencies = [
  "clap",

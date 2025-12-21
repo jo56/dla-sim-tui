@@ -231,7 +231,7 @@ impl PresetManager {
 
     /// Get the presets directory path
     fn presets_dir() -> Option<PathBuf> {
-        dirs::config_dir().map(|p| p.join("dla-simulation").join("presets"))
+        dirs::config_dir().map(|p| p.join("dla-sim-tui").join("presets"))
     }
 
     /// Load user presets from disk

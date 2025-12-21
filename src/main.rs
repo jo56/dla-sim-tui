@@ -23,7 +23,7 @@ use std::io;
 use std::time::Duration;
 
 #[derive(Parser, Debug)]
-#[command(name = "dla-simulation")]
+#[command(name = "dla-sim-tui")]
 #[command(about = "Diffusion-Limited Aggregation simulation in the terminal")]
 struct Args {
     /// Load settings from a config file (CLI args override config values)
