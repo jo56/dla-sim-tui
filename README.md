@@ -17,7 +17,8 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 
 - **High-resolution Braille rendering** - Each terminal character displays a 2x4 dot pattern
 - **Real-time simulation** - Watch the fractal structure grow
-- **24 adjustable parameters** - Fine-tune movement, sticking behavior, spawning, and visuals
+- **27 adjustable parameters** - Fine-tune movement, sticking behavior, spawning, and visuals
+- **Classic mode** - Use `--classic` for canonical Witten-Sander DLA (4-neighbor, unit steps)
 - **Multiple seed patterns** - Points, lines, rings, blocks, spokes, scatter/noise blobs and more
 - **8 color schemes** - Ice, Fire, Plasma, Viridis, Rainbow, Grayscale, Ocean, Neon
 - **Parameter popup** - Quick access to any parameter via Shift+letter
@@ -73,6 +74,12 @@ cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 1
 | Option | Description |
 |--------|-------------|
 | `--config <FILE>` | Load settings from a JSON config file. CLI args override config values. |
+
+#### Simulation Mode
+
+| Option | Description |
+|--------|-------------|
+| `--classic` | Use classic Witten-Sander DLA defaults (unit lattice steps, 4-neighbor, absorb boundary). Without this flag, enhanced defaults optimized for visualization are used. |
 
 #### Basic Options
 
@@ -138,7 +145,26 @@ dla-sim-tui --boundary wrap --spawn-mode random
 
 # Color by approach direction with inverted gradient
 dla-sim-tui --color-mode direction --invert
+
+# Run with classic Witten-Sander DLA settings
+dla-sim-tui --classic
 ```
+
+### Default vs Classic Mode
+
+The simulation offers two modes with different default parameters:
+
+| Parameter | Default Mode | Classic Mode (`--classic`) |
+|-----------|--------------|----------------------------|
+| Walk Step | 2.0 | 1.0 (unit lattice) |
+| Neighborhood | Moore (8) | Von Neumann (4) |
+| Boundary | Clamp | Absorb (respawn) |
+| Min Spawn Radius | 50.0 | 15.0 |
+| Escape Multiplier | 2.0 | 3.0 |
+
+**Default mode** is optimized for visual quality and faster growth, producing smoother, more natural-looking fractals.
+
+**Classic mode** (`--classic`) follows the canonical Witten-Sander DLA algorithm more closely, suitable for studying fractal properties and producing the characteristic angular, dendritic patterns.
 
 ### Config Files
 
@@ -233,12 +259,12 @@ Press `V` to cycle through view modes:
 | Mode | Description |
 |------|-------------|
 | Default | Narrow sidebar (22 chars) + large canvas |
-| States | Two-column params panel (48 chars) + smaller canvas - see all 24 parameters at once |
+| States | Two-column params panel (48 chars) + smaller canvas - see all 27 parameters at once |
 | Fullscreen | Canvas only, maximum visualization area |
 
 ## Parameters
 
-The simulation has 24 adjustable parameters organized into four categories.
+The simulation has 27 adjustable parameters organized into four categories.
 
 ### Movement Parameters
 
@@ -250,6 +276,9 @@ Control how particles move during their random walk.
 | Direction | 0-360° | 0 | Bias angle for directional drift |
 | Force | 0-0.5 | 0 | Strength of directional bias (0 = isotropic random walk) |
 | Radial Bias | -0.3 to 0.3 | 0 | Negative = outward drift, Positive = inward drift |
+| Adaptive Step | on/off | off | When enabled, step size scales with distance from cluster (faster simulation) |
+| Adaptive Factor | 1.0-10.0 | 3.0 | Maximum multiplier for adaptive step size |
+| Lattice Walk | on/off | on | Use 4-direction cardinal movement (classic DLA) vs continuous angles |
 
 ### Sticking Parameters
 
