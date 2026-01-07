@@ -132,7 +132,7 @@ struct Args {
     #[arg(long, default_value = "false")]
     invert: bool,
 
-    /// Color theme (default, rose-pine, rose-pine-moon, dracula, gruvbox, tokyo-night, catppuccin, nord, deep-space, sunset, matrix, amber)
+    /// Color theme (default, lagoon, bluemono, violet, harvest, midnight, rainbow, frost, deep-space, sunset, matrix, amber)
     #[arg(short = 't', long, default_value = "default")]
     theme: String,
 }
