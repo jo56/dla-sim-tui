@@ -470,7 +470,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         // Main controls
         Line::from(vec![
             Span::raw(" "),
-            Span::styled("SPC", key_style),
+            Span::styled("Spc", key_style),
             Span::styled(" pause ", desc_style),
             Span::styled("R", key_style),
             Span::styled(" reset", desc_style),
