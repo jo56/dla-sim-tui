@@ -583,6 +583,9 @@ fn run_app<B: ratatui::backend::Backend>(
                             app.cycle_boundary();
                             app.focus = Focus::Boundary;
                         }
+                        KeyCode::Char('p') | KeyCode::Char('P') => {
+                            app.focus = Focus::Particles;
+                        }
                         // w/s for navigation (like Up/Down arrows)
                         KeyCode::Char('w') => {
                             if app.show_help {

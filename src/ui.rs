@@ -15,8 +15,8 @@ const STATES_PANEL_WIDTH: u16 = 48;
 /// Max scroll for help content (generous to account for text wrapping on small screens)
 pub const HELP_CONTENT_LINES: u16 = 73;
 
-/// Number of lines in controls content (5 main + 18 Shift+letter hints + 1 record)
-pub const CONTROLS_CONTENT_LINES: u16 = 25;
+/// Number of lines in controls content (7 main + 18 Shift+letter hints + 1 record)
+pub const CONTROLS_CONTENT_LINES: u16 = 27;
 
 /// Number of lines in parameters content
 pub const PARAMS_CONTENT_LINES: u16 = 24;
@@ -478,6 +478,16 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::raw(" "),
             Span::styled("w/s/↑↓", key_style),
             Span::styled(" navigate", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("P", key_style),
+            Span::styled(" particles", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("+/-", key_style),
+            Span::styled(" speed", desc_style),
         ]),
         Line::from(vec![
             Span::raw(" "),
