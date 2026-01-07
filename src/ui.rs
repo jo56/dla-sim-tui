@@ -15,8 +15,8 @@ const STATES_PANEL_WIDTH: u16 = 48;
 /// Max scroll for help content (generous to account for text wrapping on small screens)
 pub const HELP_CONTENT_LINES: u16 = 73;
 
-/// Number of lines in controls content (9 main + 3 non-shift + 18 Shift+letter hints)
-pub const CONTROLS_CONTENT_LINES: u16 = 30;
+/// Number of lines in controls content (9 main + 10 non-shift + 18 Shift+letter hints)
+pub const CONTROLS_CONTENT_LINES: u16 = 37;
 
 /// Number of lines in parameters content
 pub const PARAMS_CONTENT_LINES: u16 = 24;
@@ -514,6 +514,41 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::raw(" "),
             Span::styled("L", key_style),
             Span::styled(" brightness", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("C", key_style),
+            Span::styled(" color", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("T", key_style),
+            Span::styled(" theme", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("M", key_style),
+            Span::styled(" mode", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("I", key_style),
+            Span::styled(" invert", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("N", key_style),
+            Span::styled(" neighbors", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("B", key_style),
+            Span::styled(" boundary", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("[/]", key_style),
+            Span::styled(" highlight", desc_style),
         ]),
         Line::from(vec![
             Span::raw(" "),

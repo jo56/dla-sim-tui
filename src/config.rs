@@ -56,7 +56,7 @@ impl Default for AppConfig {
             stickiness: 1.0,
             num_particles: 5000,
             color_scheme: ColorScheme::default(),
-            steps_per_frame: 5,
+            steps_per_frame: 15,
             color_by_age: true,
             theme: ThemeId::default(),
         }

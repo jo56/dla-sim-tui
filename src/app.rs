@@ -296,7 +296,7 @@ impl App {
             color_by_age: true,
             focus: Focus::AdaptiveStep,
             view_mode: ViewMode::Default,
-            steps_per_frame: 5,
+            steps_per_frame: 15,
             show_help: false,
             help_scroll: 0,
             controls_scroll: 0,

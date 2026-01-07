@@ -109,15 +109,15 @@ impl ThemeId {
         match self {
             ThemeId::Default => Theme {
                 name: "Default",
-                color_scheme: ColorScheme::Neon,  // High-contrast magenta->cyan->green
-                border_color: Color::Rgb(0, 255, 255),     // Bright cyan
-                highlight_color: Color::Rgb(255, 255, 0),  // Bright yellow
-                text_color: Color::Rgb(255, 255, 255),     // Pure white
-                dim_text_color: Color::Rgb(160, 160, 160), // Visible gray
-                particle_color: Color::Rgb(0, 255, 255),   // Bright cyan
-                background: BackgroundMode::Solid(8, 8, 12),  // Near-black #08080C
-                error_color: Color::Rgb(255, 80, 80),      // Bright red
-                success_color: Color::Rgb(80, 255, 80),    // Bright green
+                color_scheme: ColorScheme::Grayscale,  // Works on any terminal
+                border_color: Color::Rgb(128, 128, 128),   // Neutral gray
+                highlight_color: Color::Rgb(0, 206, 209),  // Cyan accent #00CED1
+                text_color: Color::Rgb(224, 224, 224),     // Light gray #E0E0E0
+                dim_text_color: Color::Rgb(128, 128, 128), // Medium gray
+                particle_color: Color::Rgb(0, 206, 209),   // Cyan accent
+                background: BackgroundMode::Transparent,   // Use terminal's background
+                error_color: Color::Rgb(224, 96, 96),      // Muted red #E06060
+                success_color: Color::Rgb(96, 224, 96),    // Muted green #60E060
             },
             ThemeId::Lagoon => Theme {
                 name: "Lagoon",

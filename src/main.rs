@@ -53,7 +53,7 @@ struct Args {
     seed: String,
 
     /// Simulation speed (steps per frame, 1-100)
-    #[arg(long, default_value = "5")]
+    #[arg(long, default_value = "15")]
     speed: usize,
 
     // === Movement Parameters ===

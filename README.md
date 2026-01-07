@@ -74,7 +74,7 @@ cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 1
 | `-p, --particles` | Number of particles (100-10000) | 5000 |
 | `-s, --stickiness` | Base adhesion probability (0.1-1.0) | 1.0 |
 | `--seed` | Seed pattern (point, line, cross, circle, ring, block, noise, scatter, multipoint, starburst) | point |
-| `--speed` | Steps per frame (1-100) | 5 |
+| `--speed` | Steps per frame (1-100) | 15 |
 
 #### Movement Options
 
@@ -346,11 +346,11 @@ Control how the simulation is displayed.
 
 ### Themes
 
-12 color themes are available, each with matching UI colors, particle gradients, and solid backgrounds. Use `--theme <name>` or press `T` to cycle.
+12 color themes are available, each with matching UI colors and particle gradients. The default theme uses a transparent background (inherits your terminal's colors); other themes use solid backgrounds. Use `--theme <name>` or press `T` to cycle.
 
 | Theme | Description | CLI Name |
 |-------|-------------|----------|
-| **Default** | Cyan/yellow on dark gray | `default` |
+| **Default** | Grayscale + cyan, transparent background | `default` |
 | **Lagoon** | Teal/gold coastal theme | `lagoon` |
 | **Bluemono** | Light theme, black/blue on white | `bluemono` |
 | **Violet** | Purple/pink gradient | `violet` |
