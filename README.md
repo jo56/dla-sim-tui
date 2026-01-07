@@ -20,7 +20,8 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 - **27 adjustable parameters** - Fine-tune movement, sticking behavior, spawning, and visuals
 - **Classic mode** - Use `--classic` for canonical Witten-Sander DLA (4-neighbor, unit steps)
 - **Multiple seed patterns** - Points, lines, rings, blocks, spokes, scatter/noise blobs and more
-- **8 color schemes** - Ice, Fire, Plasma, Viridis, Rainbow, Grayscale, Ocean, Neon
+- **12 color themes** - Lagoon, Violet, Harvest, Midnight, Frost, and more
+- **16 color gradients** - Theme-matched gradients plus classic options (Ice, Fire, Plasma, etc.)
 - **Parameter popup** - Quick access to any parameter via Shift+letter
 - **Three view modes** - Default (sidebar + canvas), States (all params visible), Fullscreen (canvas only)
 - **Config export/import** - Save and load settings as JSON files
@@ -127,6 +128,7 @@ cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 1
 | `--color-mode` | Color property (age, distance, density, direction) | age |
 | `--highlight` | Recent particles to highlight (0-50) | 0 |
 | `--invert` | Invert color gradient | false |
+| `--theme` | Color theme (see Themes section below) | default |
 
 ### Examples
 
@@ -244,6 +246,8 @@ If you request `.mp4` or `.webm` but FFmpeg isn't installed, the recording will 
 |-----|--------|
 | `A` | Toggle color-by-age |
 | `C` | Cycle color scheme |
+| `T` | Cycle theme (next) |
+| `Shift+T` | Cycle theme (previous) |
 | `M` | Cycle color mode |
 | `N` | Cycle neighborhood type |
 | `B` | Cycle boundary behavior |
@@ -333,19 +337,43 @@ Control how the simulation is displayed.
 |-----------|-------|---------|-------------|
 | Particles | 100-10000 | 5000 | Total number of particles |
 | Speed | 1-100 | 5 | Simulation steps per frame |
-| Color Scheme | 8 options | Ice | Color palette |
+| Color Scheme | 16 options | Ice | Color gradient |
 | Color Mode | Age/Distance/Density/Direction | Age | What property determines color |
 | Color by Age | on/off | on | Enable color gradient |
 | Invert | on/off | off | Invert color gradient |
 | Highlight | 0-50 | 0 | Recent particles shown in white |
-
-**Color Schemes:** Ice, Fire, Plasma, Viridis, Rainbow, Grayscale, Ocean, Neon
 
 **Color Modes:**
 - **Age**: Color based on attachment order (oldest to newest)
 - **Distance**: Color based on distance from center
 - **Density**: Color based on neighbor count when stuck
 - **Direction**: Color based on approach angle when stuck
+
+### Themes
+
+12 color themes are available, each with matching UI colors, particle gradients, and solid backgrounds. Use `--theme <name>` or press `T` to cycle.
+
+| Theme | Description | CLI Name |
+|-------|-------------|----------|
+| **Default** | Cyan/yellow on dark gray | `default` |
+| **Lagoon** | Teal/gold coastal theme | `lagoon` |
+| **Bluemono** | Light theme, black/blue on white | `bluemono` |
+| **Violet** | Purple/pink gradient | `violet` |
+| **Harvest** | Earthy orange/yellow | `harvest` |
+| **Midnight** | Deep blue night sky | `midnight` |
+| **Rainbow** | Pastel purple/pink plasma | `rainbow` |
+| **Frost** | Icy cyan/white | `frost` |
+| **Deep Space** | Neon on dark blue | `deep-space` |
+| **Sunset** | Warm red/orange/yellow | `sunset` |
+| **Matrix** | Green terminal aesthetic | `matrix` |
+| **Amber** | Amber monochrome | `amber` |
+
+Example usage:
+```bash
+dla-sim-tui --theme violet
+dla-sim-tui --theme lagoon
+dla-sim-tui --theme matrix
+```
 
 ### Seed Patterns
 

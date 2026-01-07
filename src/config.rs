@@ -1,6 +1,7 @@
 use crate::color::ColorScheme;
 use crate::settings::SimulationSettings;
 use crate::simulation::SeedPattern;
+use crate::theme::ThemeId;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
@@ -18,12 +19,15 @@ pub struct AppConfig {
     pub stickiness: f32,
     /// Number of particles
     pub num_particles: usize,
-    /// Color scheme (app-level)
+    /// Color scheme (app-level) - kept for backwards compatibility
     pub color_scheme: ColorScheme,
     /// Steps per frame (app-level)
     pub steps_per_frame: usize,
     /// Color by age toggle (app-level)
     pub color_by_age: bool,
+    /// Theme ID (app-level)
+    #[serde(default)]
+    pub theme: ThemeId,
 }
 
 impl AppConfig {
@@ -54,6 +58,7 @@ impl Default for AppConfig {
             color_scheme: ColorScheme::default(),
             steps_per_frame: 5,
             color_by_age: true,
+            theme: ThemeId::default(),
         }
     }
 }
@@ -97,6 +102,7 @@ mod tests {
             color_scheme: ColorScheme::Fire,
             steps_per_frame: 10,
             color_by_age: false,
+            theme: ThemeId::Dracula,
         };
 
         // Serialize to JSON
@@ -118,6 +124,7 @@ mod tests {
         assert_eq!(parsed.color_scheme, config.color_scheme);
         assert_eq!(parsed.steps_per_frame, config.steps_per_frame);
         assert_eq!(parsed.color_by_age, config.color_by_age);
+        assert_eq!(parsed.theme, config.theme);
     }
 
     #[test]
@@ -172,6 +179,7 @@ mod tests {
             color_scheme: ColorScheme::Neon,
             steps_per_frame: 25,
             color_by_age: false,
+            theme: ThemeId::Matrix,
         };
 
         let json = serde_json::to_string(&original).unwrap();
@@ -205,6 +213,7 @@ mod tests {
         assert_eq!(restored.color_scheme, ColorScheme::Neon);
         assert_eq!(restored.steps_per_frame, 25);
         assert!(!restored.color_by_age);
+        assert_eq!(restored.theme, ThemeId::Matrix);
     }
 
     #[test]

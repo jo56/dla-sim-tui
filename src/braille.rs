@@ -43,6 +43,8 @@ pub fn render_to_braille(
     color_mode: ColorMode,
     highlight_recent: usize,
     invert_colors: bool,
+    fallback_color: Color,
+    highlight_color: Color,
 ) -> Vec<BrailleCell> {
     let sim_width = simulation.grid_width;
     let sim_height = simulation.grid_height;
@@ -110,14 +112,14 @@ pub fn render_to_braille(
                 let braille_char = char::from_u32(BRAILLE_BASE + pattern as u32).unwrap_or(' ');
 
                 let color = if is_recent {
-                    // Highlight recent particles in a contrasting color
-                    Color::Rgb(255, 255, 255)
+                    // Highlight recent particles using theme's highlight color
+                    highlight_color
                 } else if color_by_age && dot_count > 0 {
                     let avg_value = total_value / dot_count as f32;
                     let t = if invert_colors { 1.0 - avg_value } else { avg_value };
                     map_from_lut(color_lut, t)
                 } else {
-                    Color::White
+                    fallback_color
                 };
 
                 cells.push(BrailleCell {

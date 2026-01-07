@@ -1,5 +1,6 @@
 use crate::app::{App, Focus, ParamPopup, TextInputPopup, ViewMode};
 use crate::braille;
+use crate::theme::BackgroundMode;
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -20,24 +21,25 @@ pub const CONTROLS_CONTENT_LINES: u16 = 25;
 /// Number of lines in parameters content
 pub const PARAMS_CONTENT_LINES: u16 = 24;
 
-// UI color scheme
-const BORDER_COLOR: Color = Color::Cyan;
-const HIGHLIGHT_COLOR: Color = Color::Yellow;
-const TEXT_COLOR: Color = Color::White;
-const DIM_TEXT_COLOR: Color = Color::Gray;
-
-/// Creates a standard styled block with rounded borders
-fn styled_block(title: &str) -> Block<'_> {
+/// Creates a standard styled block with rounded borders using theme colors
+fn styled_block(title: &str, border_color: Color) -> Block<'_> {
     Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(BORDER_COLOR))
+        .border_style(Style::default().fg(border_color))
         .title(title)
 }
 
 /// Main render function
 pub fn render(frame: &mut Frame, app: &App) {
     let area = frame.area();
+
+    // Fill entire frame with theme background color
+    if let BackgroundMode::Solid(r, g, b) = app.theme.background {
+        let bg_block = Block::default()
+            .style(Style::default().bg(Color::Rgb(r, g, b)));
+        frame.render_widget(bg_block, area);
+    }
 
     match app.view_mode {
         ViewMode::Fullscreen => {
@@ -63,12 +65,12 @@ pub fn render(frame: &mut Frame, app: &App) {
 
     // Render param popup if open
     if let Some(popup) = &app.param_popup {
-        render_param_popup(frame, area, popup);
+        render_param_popup(frame, area, popup, &app.theme);
     }
 
     // Render export popup if open (overlays everything)
     if let Some(popup) = &app.export_popup {
-        render_export_popup(frame, area, popup);
+        render_export_popup(frame, area, popup, &app.theme);
     }
 
     // Render export result toast if present
@@ -78,7 +80,7 @@ pub fn render(frame: &mut Frame, app: &App) {
 
     // Render recording popup if open (overlays everything)
     if let Some(popup) = &app.recording_popup {
-        render_recording_popup(frame, area, popup);
+        render_recording_popup(frame, area, popup, &app.theme);
     }
 
     // Render recording result toast if present
@@ -191,7 +193,8 @@ fn render_sidebar(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
-    let block = styled_block(" DLA Sim TUI ");
+    let theme = &app.theme;
+    let block = styled_block(" DLA Sim TUI ", theme.border_color);
 
     let progress = app.simulation.progress();
     let progress_width = (area.width.saturating_sub(4)) as usize;
@@ -203,11 +206,11 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
         let frame_count = app.recorder.frame_count().unwrap_or(0);
         (format!("REC {}", frame_count), Color::Red)
     } else if app.simulation.paused {
-        ("PAUSED".to_string(), HIGHLIGHT_COLOR)
+        ("PAUSED".to_string(), theme.highlight_color)
     } else if app.simulation.is_complete() {
-        ("COMPLETE".to_string(), Color::Green)
+        ("COMPLETE".to_string(), theme.highlight_color)
     } else {
-        ("RUNNING".to_string(), BORDER_COLOR)
+        ("RUNNING".to_string(), theme.border_color)
     };
 
     // Calculate fractal dimension (only when enough particles)
@@ -219,16 +222,16 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
     };
 
     let content = vec![
-        Line::from(Span::styled(dim_text, Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled(dim_text, Style::default().fg(theme.text_color))),
         Line::from(vec![
             Span::styled(
                 format!("N: {} / {}", app.simulation.particles_stuck, app.simulation.num_particles),
-                Style::default().fg(TEXT_COLOR),
+                Style::default().fg(theme.text_color),
             ),
         ]),
         Line::from(vec![
-            Span::styled("█".repeat(filled), Style::default().fg(Color::Green)),
-            Span::styled("░".repeat(empty), Style::default().fg(Color::DarkGray)),
+            Span::styled("█".repeat(filled), Style::default().fg(theme.border_color)),
+            Span::styled("░".repeat(empty), Style::default().fg(theme.dim_text_color)),
         ]),
         Line::from(Span::styled(status_text, Style::default().fg(status_color))),
     ];
@@ -238,8 +241,9 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
+    let theme = &app.theme;
     let is_focused = app.focus.is_param();
-    let border_color = if is_focused { HIGHLIGHT_COLOR } else { BORDER_COLOR };
+    let border_color = if is_focused { theme.highlight_color } else { theme.border_color };
     let title = if is_focused {
         " Params (w/s/j/k) "
     } else {
@@ -251,12 +255,16 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
         .border_style(Style::default().fg(border_color))
         .title(title);
 
+    let highlight_color = theme.highlight_color;
+    let text_color = theme.text_color;
+    let dim_text_color = theme.dim_text_color;
+
     let make_line = |label: &str, value: String, focused: bool| {
         let prefix = if focused { ">" } else { " " };
         let style = if focused {
-            Style::default().fg(HIGHLIGHT_COLOR)
+            Style::default().fg(highlight_color)
         } else {
-            Style::default().fg(TEXT_COLOR)
+            Style::default().fg(text_color)
         };
         Line::from(Span::styled(format!("{}{}: {}", prefix, label, value), style))
     };
@@ -266,7 +274,7 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
     let make_header = |label: &str| {
         Line::from(Span::styled(
             format!(" - {} -", label.to_lowercase()),
-            Style::default().fg(DIM_TEXT_COLOR),
+            Style::default().fg(dim_text_color),
         ))
     };
 
@@ -438,8 +446,9 @@ fn render_params_box(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
-    let key_style = Style::default().fg(HIGHLIGHT_COLOR);
-    let desc_style = Style::default().fg(DIM_TEXT_COLOR);
+    let theme = &app.theme;
+    let key_style = Style::default().fg(theme.highlight_color);
+    let desc_style = Style::default().fg(theme.dim_text_color);
 
     // Main controls (top 4 lines) + Shift+letter hints below
     let content = vec![
@@ -586,7 +595,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         " Controls "
     };
 
-    let border_color = if is_focused { HIGHLIGHT_COLOR } else { BORDER_COLOR };
+    let border_color = if is_focused { theme.highlight_color } else { theme.border_color };
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
@@ -599,9 +608,10 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
     frame.render_widget(paragraph, area);
 }
 
-fn render_nav_box(frame: &mut Frame, area: Rect, _app: &App) {
-    let key_style = Style::default().fg(HIGHLIGHT_COLOR);
-    let desc_style = Style::default().fg(DIM_TEXT_COLOR);
+fn render_nav_box(frame: &mut Frame, area: Rect, app: &App) {
+    let theme = &app.theme;
+    let key_style = Style::default().fg(theme.highlight_color);
+    let desc_style = Style::default().fg(theme.dim_text_color);
 
     let content = vec![
         Line::from(vec![
@@ -619,7 +629,7 @@ fn render_nav_box(frame: &mut Frame, area: Rect, _app: &App) {
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(BORDER_COLOR))
+        .border_style(Style::default().fg(theme.border_color))
         .title(" Focus ");
 
     let paragraph = Paragraph::new(content).block(block);
@@ -656,8 +666,9 @@ fn render_states_panel(frame: &mut Frame, area: Rect, app: &App) {
 
 /// Render parameters in two columns for States mode
 fn render_two_column_params(frame: &mut Frame, area: Rect, app: &App) {
+    let theme = &app.theme;
     let is_focused = app.focus.is_param();
-    let border_color = if is_focused { HIGHLIGHT_COLOR } else { BORDER_COLOR };
+    let border_color = if is_focused { theme.highlight_color } else { theme.border_color };
     let title = if is_focused {
         " Params (w/s/j/k) "
     } else {
@@ -681,12 +692,16 @@ fn render_two_column_params(frame: &mut Frame, area: Rect, app: &App) {
 
     let settings = &app.simulation.settings;
 
+    let highlight_color = theme.highlight_color;
+    let text_color = theme.text_color;
+    let dim_text_color = theme.dim_text_color;
+
     let make_line = |label: &str, value: String, focused: bool| -> Line<'_> {
         let prefix = if focused { ">" } else { " " };
         let style = if focused {
-            Style::default().fg(HIGHLIGHT_COLOR)
+            Style::default().fg(highlight_color)
         } else {
-            Style::default().fg(TEXT_COLOR)
+            Style::default().fg(text_color)
         };
         Line::from(Span::styled(format!("{}{}: {}", prefix, label, value), style))
     };
@@ -694,7 +709,7 @@ fn render_two_column_params(frame: &mut Frame, area: Rect, app: &App) {
     let make_header = |label: &str| -> Line<'_> {
         Line::from(Span::styled(
             format!("-- {} --", label.to_lowercase()),
-            Style::default().fg(DIM_TEXT_COLOR),
+            Style::default().fg(dim_text_color),
         ))
     };
 
@@ -812,7 +827,16 @@ fn render_two_column_params(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
-    let block = styled_block("");
+    let theme = &app.theme;
+
+    // Handle solid background themes
+    if let BackgroundMode::Solid(r, g, b) = theme.background {
+        let bg_block = Block::default()
+            .style(Style::default().bg(Color::Rgb(r, g, b)));
+        frame.render_widget(bg_block, area);
+    }
+
+    let block = styled_block("", theme.border_color);
 
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -830,6 +854,8 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
         settings.color_mode,
         settings.highlight_recent,
         settings.invert_colors,
+        theme.text_color,
+        theme.highlight_color,
     );
 
     for cell in cells {
@@ -851,6 +877,11 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
+    let theme = &app.theme;
+    let border_color = theme.border_color;
+    let highlight_color = theme.highlight_color;
+    let text_color = theme.text_color;
+
     // Calculate the canvas area based on view mode
     let (canvas_x, canvas_width) = match app.view_mode {
         ViewMode::Fullscreen => (0, area.width),
@@ -877,56 +908,57 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
     // Build expanded help content (formatted for wrapping)
     let content = vec![
         Line::from(""),
-        Line::from(Span::styled("DIFFUSION-LIMITED AGGREGATION", Style::default().fg(BORDER_COLOR))),
+        Line::from(Span::styled("DIFFUSION-LIMITED AGGREGATION", Style::default().fg(border_color))),
         Line::from(""),
         Line::from("Particles randomly walk until they touch and stick to the growing structure, creating fractal patterns."),
         Line::from(""),
-        Line::from(Span::styled("BASIC CONTROLS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(Span::styled("BASIC CONTROLS:", Style::default().fg(highlight_color))),
         Line::from(""),
-        Line::from(Span::styled("Space - Pause/Resume", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("R - Reset simulation", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Tab - Next parameter", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Shift+Tab - Previous parameter", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("w/s/↑↓ - Navigate/Scroll", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("j/k - Adjust focused value", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Esc - Close help / exit focus", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("V - Cycle view (Default/States/Fullscreen)", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("` - Start/stop recording", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Shift+X - Export config to file", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Q - Quit", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Space - Pause/Resume", Style::default().fg(text_color))),
+        Line::from(Span::styled("R - Reset simulation", Style::default().fg(text_color))),
+        Line::from(Span::styled("Tab - Next parameter", Style::default().fg(text_color))),
+        Line::from(Span::styled("Shift+Tab - Previous parameter", Style::default().fg(text_color))),
+        Line::from(Span::styled("w/s/↑↓ - Navigate/Scroll", Style::default().fg(text_color))),
+        Line::from(Span::styled("j/k - Adjust focused value", Style::default().fg(text_color))),
+        Line::from(Span::styled("Esc - Close help / exit focus", Style::default().fg(text_color))),
+        Line::from(Span::styled("V - Cycle view (Default/States/Fullscreen)", Style::default().fg(text_color))),
+        Line::from(Span::styled("T - Cycle theme", Style::default().fg(text_color))),
+        Line::from(Span::styled("` - Start/stop recording", Style::default().fg(text_color))),
+        Line::from(Span::styled("Shift+X - Export config to file", Style::default().fg(text_color))),
+        Line::from(Span::styled("Q - Quit", Style::default().fg(text_color))),
         Line::from(""),
-        Line::from(Span::styled("PARAMETER POPUP:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(Span::styled("PARAMETER POPUP:", Style::default().fg(highlight_color))),
         Line::from(""),
-        Line::from(Span::styled("Shift+? - Open ALL parameters popup", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Shift+letter - Filter by first letter", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Enter - Select from popup", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Esc - Close popup", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("Shift+? - Open ALL parameters popup", Style::default().fg(text_color))),
+        Line::from(Span::styled("Shift+letter - Filter by first letter", Style::default().fg(text_color))),
+        Line::from(Span::styled("Enter - Select from popup", Style::default().fg(text_color))),
+        Line::from(Span::styled("Esc - Close popup", Style::default().fg(text_color))),
         Line::from(""),
-        Line::from(Span::styled("QUICK KEYS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(Span::styled("QUICK KEYS:", Style::default().fg(highlight_color))),
         Line::from(""),
-        Line::from(Span::styled("1-0 - Seed patterns (Point to Scatter)", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("+/- - Adjust speed", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("[/] - Adjust highlight count", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("1-0 - Seed patterns (Point to Scatter)", Style::default().fg(text_color))),
+        Line::from(Span::styled("+/- - Adjust speed", Style::default().fg(text_color))),
+        Line::from(Span::styled("[/] - Adjust highlight count", Style::default().fg(text_color))),
         Line::from(""),
-        Line::from(Span::styled("DIRECT PARAM KEYS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(Span::styled("DIRECT PARAM KEYS:", Style::default().fg(highlight_color))),
         Line::from(""),
-        Line::from(Span::styled("A - Toggle color-by-age", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("C - Cycle color scheme", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("M - Cycle color mode", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("N - Cycle neighborhood type", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("B - Cycle boundary behavior", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Shift+S - Spawn popup", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("Shift+W/E - Walk step +/-", Style::default().fg(TEXT_COLOR))),
-        Line::from(Span::styled("I - Invert colors", Style::default().fg(TEXT_COLOR))),
+        Line::from(Span::styled("A - Toggle color-by-age", Style::default().fg(text_color))),
+        Line::from(Span::styled("C - Cycle color scheme", Style::default().fg(text_color))),
+        Line::from(Span::styled("M - Cycle color mode", Style::default().fg(text_color))),
+        Line::from(Span::styled("N - Cycle neighborhood type", Style::default().fg(text_color))),
+        Line::from(Span::styled("B - Cycle boundary behavior", Style::default().fg(text_color))),
+        Line::from(Span::styled("Shift+S - Spawn popup", Style::default().fg(text_color))),
+        Line::from(Span::styled("Shift+W/E - Walk step +/-", Style::default().fg(text_color))),
+        Line::from(Span::styled("I - Invert colors", Style::default().fg(text_color))),
         Line::from(""),
-        Line::from(Span::styled("MOVEMENT PARAMETERS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(Span::styled("MOVEMENT PARAMETERS:", Style::default().fg(highlight_color))),
         Line::from(""),
         Line::from("Walk Step (0.5-5.0) - Distance per step"),
         Line::from("Direction (0-360) - Bias angle"),
         Line::from("Force (0-0.5) - Bias strength"),
         Line::from("Radial (-0.3 to 0.3) - Inward/outward drift"),
         Line::from(""),
-        Line::from(Span::styled("STICKING PARAMETERS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(Span::styled("STICKING PARAMETERS:", Style::default().fg(highlight_color))),
         Line::from(""),
         Line::from("Stickiness (0.1-1.0) - Base stick chance"),
         Line::from("Neighborhood - VonNeumann/Moore/Extended"),
@@ -934,17 +966,17 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from("Tip/Side Sticky - Stickiness by position"),
         Line::from("Gradient - Distance-based stickiness"),
         Line::from(""),
-        Line::from(Span::styled("SPAWN/BOUNDARY:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(Span::styled("SPAWN/BOUNDARY:", Style::default().fg(highlight_color))),
         Line::from(""),
         Line::from("Spawn - Circle/Edges/Corners/Random/Dir"),
         Line::from("Boundary - Clamp/Wrap/Bounce/Stick/Absorb"),
         Line::from("Offset/Escape/MinRadius/MaxIter"),
         Line::from(""),
-        Line::from(Span::styled("VISUAL PARAMETERS:", Style::default().fg(HIGHLIGHT_COLOR))),
+        Line::from(Span::styled("VISUAL PARAMETERS:", Style::default().fg(highlight_color))),
         Line::from(""),
         Line::from("Particles (100-10000) - Total count"),
         Line::from("Speed (1-100) - Steps per frame"),
-        Line::from("Color - 8 schemes, 4 modes"),
+        Line::from("Color - 16 schemes, 4 modes"),
         Line::from("Highlight (0-50) - Recent particles in white"),
         Line::from(""),
     ];
@@ -964,7 +996,7 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Double)
-        .border_style(Style::default().fg(HIGHLIGHT_COLOR))
+        .border_style(Style::default().fg(highlight_color))
         .title(title);
 
     let paragraph = Paragraph::new(content)
@@ -976,7 +1008,10 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 /// Render parameter selection popup
-fn render_param_popup(frame: &mut Frame, area: Rect, popup: &ParamPopup) {
+fn render_param_popup(frame: &mut Frame, area: Rect, popup: &ParamPopup, theme: &crate::theme::Theme) {
+    let highlight_color = theme.highlight_color;
+    let text_color = theme.text_color;
+
     // Calculate popup size based on content
     let max_name_len = popup
         .options
@@ -1012,10 +1047,10 @@ fn render_param_popup(frame: &mut Frame, area: Rect, popup: &ParamPopup) {
             let prefix = if is_selected { "> " } else { "  " };
             let style = if is_selected {
                 Style::default()
-                    .fg(HIGHLIGHT_COLOR)
+                    .fg(highlight_color)
                     .add_modifier(Modifier::BOLD)
             } else {
-                Style::default().fg(TEXT_COLOR)
+                Style::default().fg(text_color)
             };
             Line::from(Span::styled(format!("{}{}", prefix, name), style))
         })
@@ -1034,7 +1069,7 @@ fn render_param_popup(frame: &mut Frame, area: Rect, popup: &ParamPopup) {
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Double)
-        .border_style(Style::default().fg(HIGHLIGHT_COLOR))
+        .border_style(Style::default().fg(highlight_color))
         .title(title);
 
     let paragraph = Paragraph::new(content)
@@ -1046,7 +1081,11 @@ fn render_param_popup(frame: &mut Frame, area: Rect, popup: &ParamPopup) {
 }
 
 /// Render text input popup for export filename
-fn render_export_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup) {
+fn render_export_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup, theme: &crate::theme::Theme) {
+    let highlight_color = theme.highlight_color;
+    let text_color = theme.text_color;
+    let dim_text_color = theme.dim_text_color;
+
     let popup_width = 44.min(area.width.saturating_sub(4));
     let popup_height = 5;
 
@@ -1066,26 +1105,26 @@ fn render_export_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup) {
     let (before_cursor, after_cursor) = popup.input.split_at(popup.cursor_pos);
     let content = vec![
         Line::from(vec![
-            Span::styled(before_cursor, Style::default().fg(TEXT_COLOR)),
+            Span::styled(before_cursor, Style::default().fg(text_color)),
             Span::styled(
                 "_",
                 Style::default()
-                    .fg(HIGHLIGHT_COLOR)
+                    .fg(highlight_color)
                     .add_modifier(Modifier::SLOW_BLINK),
             ),
-            Span::styled(after_cursor, Style::default().fg(TEXT_COLOR)),
+            Span::styled(after_cursor, Style::default().fg(text_color)),
         ]),
         Line::from(""),
         Line::from(Span::styled(
             "Enter: save | Esc: cancel",
-            Style::default().fg(DIM_TEXT_COLOR),
+            Style::default().fg(dim_text_color),
         )),
     ];
 
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Double)
-        .border_style(Style::default().fg(HIGHLIGHT_COLOR))
+        .border_style(Style::default().fg(highlight_color))
         .title(popup.title);
 
     let paragraph = Paragraph::new(content).block(block);
@@ -1128,7 +1167,11 @@ fn render_export_result(frame: &mut Frame, area: Rect, result: &Result<String, S
 }
 
 /// Render text input popup for recording filename
-fn render_recording_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup) {
+fn render_recording_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup, theme: &crate::theme::Theme) {
+    let highlight_color = theme.highlight_color;
+    let text_color = theme.text_color;
+    let dim_text_color = theme.dim_text_color;
+
     let popup_width = 44.min(area.width.saturating_sub(4));
     let popup_height = 6;
 
@@ -1148,23 +1191,23 @@ fn render_recording_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup)
     let (before_cursor, after_cursor) = popup.input.split_at(popup.cursor_pos);
     let content = vec![
         Line::from(vec![
-            Span::styled(before_cursor, Style::default().fg(TEXT_COLOR)),
+            Span::styled(before_cursor, Style::default().fg(text_color)),
             Span::styled(
                 "_",
                 Style::default()
-                    .fg(HIGHLIGHT_COLOR)
+                    .fg(highlight_color)
                     .add_modifier(Modifier::SLOW_BLINK),
             ),
-            Span::styled(after_cursor, Style::default().fg(TEXT_COLOR)),
+            Span::styled(after_cursor, Style::default().fg(text_color)),
         ]),
         Line::from(""),
         Line::from(Span::styled(
             ".mp4/.webm (FFmpeg) or .gif",
-            Style::default().fg(DIM_TEXT_COLOR),
+            Style::default().fg(dim_text_color),
         )),
         Line::from(Span::styled(
             "Enter: start | Esc: cancel",
-            Style::default().fg(DIM_TEXT_COLOR),
+            Style::default().fg(dim_text_color),
         )),
     ];
 

@@ -23,6 +23,15 @@ pub enum ColorScheme {
     Grayscale,
     Ocean,
     Neon,
+    // Theme-specific gradients (renamed to match theme names)
+    Lagoon,
+    Violet,
+    Harvest,
+    Midnight,
+    Frost,
+    Sunset,
+    Matrix,
+    Amber,
 }
 
 impl ColorScheme {
@@ -36,6 +45,14 @@ impl ColorScheme {
             ColorScheme::Grayscale => "Grayscale",
             ColorScheme::Ocean => "Ocean",
             ColorScheme::Neon => "Neon",
+            ColorScheme::Lagoon => "Lagoon",
+            ColorScheme::Violet => "Violet",
+            ColorScheme::Harvest => "Harvest",
+            ColorScheme::Midnight => "Midnight",
+            ColorScheme::Frost => "Frost",
+            ColorScheme::Sunset => "Sunset",
+            ColorScheme::Matrix => "Matrix",
+            ColorScheme::Amber => "Amber",
         }
     }
 
@@ -48,13 +65,21 @@ impl ColorScheme {
             ColorScheme::Rainbow => ColorScheme::Grayscale,
             ColorScheme::Grayscale => ColorScheme::Ocean,
             ColorScheme::Ocean => ColorScheme::Neon,
-            ColorScheme::Neon => ColorScheme::Ice,
+            ColorScheme::Neon => ColorScheme::Lagoon,
+            ColorScheme::Lagoon => ColorScheme::Violet,
+            ColorScheme::Violet => ColorScheme::Harvest,
+            ColorScheme::Harvest => ColorScheme::Midnight,
+            ColorScheme::Midnight => ColorScheme::Frost,
+            ColorScheme::Frost => ColorScheme::Sunset,
+            ColorScheme::Sunset => ColorScheme::Matrix,
+            ColorScheme::Matrix => ColorScheme::Amber,
+            ColorScheme::Amber => ColorScheme::Ice,
         }
     }
 
     pub fn prev(&self) -> ColorScheme {
         match self {
-            ColorScheme::Ice => ColorScheme::Neon,
+            ColorScheme::Ice => ColorScheme::Amber,
             ColorScheme::Fire => ColorScheme::Ice,
             ColorScheme::Plasma => ColorScheme::Fire,
             ColorScheme::Viridis => ColorScheme::Plasma,
@@ -62,6 +87,14 @@ impl ColorScheme {
             ColorScheme::Grayscale => ColorScheme::Rainbow,
             ColorScheme::Ocean => ColorScheme::Grayscale,
             ColorScheme::Neon => ColorScheme::Ocean,
+            ColorScheme::Lagoon => ColorScheme::Neon,
+            ColorScheme::Violet => ColorScheme::Lagoon,
+            ColorScheme::Harvest => ColorScheme::Violet,
+            ColorScheme::Midnight => ColorScheme::Harvest,
+            ColorScheme::Frost => ColorScheme::Midnight,
+            ColorScheme::Sunset => ColorScheme::Frost,
+            ColorScheme::Matrix => ColorScheme::Sunset,
+            ColorScheme::Amber => ColorScheme::Matrix,
         }
     }
 
@@ -83,6 +116,14 @@ impl ColorScheme {
             ColorScheme::Grayscale => Self::grayscale_gradient(t),
             ColorScheme::Ocean => Self::ocean_gradient(t),
             ColorScheme::Neon => Self::neon_gradient(t),
+            ColorScheme::Lagoon => Self::lagoon_gradient(t),
+            ColorScheme::Violet => Self::violet_gradient(t),
+            ColorScheme::Harvest => Self::harvest_gradient(t),
+            ColorScheme::Midnight => Self::midnight_gradient(t),
+            ColorScheme::Frost => Self::frost_gradient(t),
+            ColorScheme::Sunset => Self::sunset_gradient(t),
+            ColorScheme::Matrix => Self::matrix_gradient(t),
+            ColorScheme::Amber => Self::amber_gradient(t),
         }
     }
 
@@ -190,5 +231,136 @@ impl ColorScheme {
             ((g + m) * 255.0) as u8,
             ((b + m) * 255.0) as u8,
         )
+    }
+
+    // Theme-specific gradients
+
+    fn lagoon_gradient(t: f32) -> (u8, u8, u8) {
+        // Deep purple -> teal -> gold -> rose (coastal lagoon colors)
+        // #191724 -> #31748F -> #F6C177 -> #EBBCBA
+        if t < 0.33 {
+            let s = t / 0.33;
+            Self::lerp_rgb((25, 23, 36), (49, 116, 143), s)
+        } else if t < 0.66 {
+            let s = (t - 0.33) / 0.33;
+            Self::lerp_rgb((49, 116, 143), (246, 193, 119), s)
+        } else {
+            let s = (t - 0.66) / 0.34;
+            Self::lerp_rgb((246, 193, 119), (235, 188, 186), s)
+        }
+    }
+
+    fn violet_gradient(t: f32) -> (u8, u8, u8) {
+        // Dark background -> purple -> pink -> cyan
+        // #282A36 -> #BD93F9 -> #FF79C6 -> #8BE9FD
+        if t < 0.33 {
+            let s = t / 0.33;
+            Self::lerp_rgb((40, 42, 54), (189, 147, 249), s)
+        } else if t < 0.66 {
+            let s = (t - 0.33) / 0.33;
+            Self::lerp_rgb((189, 147, 249), (255, 121, 198), s)
+        } else {
+            let s = (t - 0.66) / 0.34;
+            Self::lerp_rgb((255, 121, 198), (139, 233, 253), s)
+        }
+    }
+
+    fn harvest_gradient(t: f32) -> (u8, u8, u8) {
+        // Dark background -> orange -> yellow -> bright yellow (autumn harvest)
+        // #282828 -> #D65D0E -> #D79921 -> #FABD2F
+        if t < 0.33 {
+            let s = t / 0.33;
+            Self::lerp_rgb((40, 40, 40), (214, 93, 14), s)
+        } else if t < 0.66 {
+            let s = (t - 0.33) / 0.33;
+            Self::lerp_rgb((214, 93, 14), (215, 153, 33), s)
+        } else {
+            let s = (t - 0.66) / 0.34;
+            Self::lerp_rgb((215, 153, 33), (250, 189, 47), s)
+        }
+    }
+
+    fn midnight_gradient(t: f32) -> (u8, u8, u8) {
+        // Deep blue -> blue -> purple -> light lavender (midnight sky)
+        // #1A1B26 -> #7AA2F7 -> #BB9AF7 -> #C0CAF5
+        if t < 0.33 {
+            let s = t / 0.33;
+            Self::lerp_rgb((26, 27, 38), (122, 162, 247), s)
+        } else if t < 0.66 {
+            let s = (t - 0.33) / 0.33;
+            Self::lerp_rgb((122, 162, 247), (187, 154, 247), s)
+        } else {
+            let s = (t - 0.66) / 0.34;
+            Self::lerp_rgb((187, 154, 247), (192, 202, 245), s)
+        }
+    }
+
+    fn frost_gradient(t: f32) -> (u8, u8, u8) {
+        // Dark -> frost blue -> bright frost -> snow (icy frost)
+        // #2E3440 -> #5E81AC -> #88C0D0 -> #ECEFF4
+        if t < 0.33 {
+            let s = t / 0.33;
+            Self::lerp_rgb((46, 52, 64), (94, 129, 172), s)
+        } else if t < 0.66 {
+            let s = (t - 0.33) / 0.33;
+            Self::lerp_rgb((94, 129, 172), (136, 192, 208), s)
+        } else {
+            let s = (t - 0.66) / 0.34;
+            Self::lerp_rgb((136, 192, 208), (236, 239, 244), s)
+        }
+    }
+
+    fn sunset_gradient(t: f32) -> (u8, u8, u8) {
+        // Dark purple -> red -> orange -> yellow
+        // #1A1423 -> #FF6B6B -> #FFA07A -> #FFE66D
+        if t < 0.33 {
+            let s = t / 0.33;
+            Self::lerp_rgb((26, 20, 35), (255, 107, 107), s)
+        } else if t < 0.66 {
+            let s = (t - 0.33) / 0.33;
+            Self::lerp_rgb((255, 107, 107), (255, 160, 122), s)
+        } else {
+            let s = (t - 0.66) / 0.34;
+            Self::lerp_rgb((255, 160, 122), (255, 230, 109), s)
+        }
+    }
+
+    fn matrix_gradient(t: f32) -> (u8, u8, u8) {
+        // Black -> dark green -> bright green -> yellow-green
+        // #0A0A0A -> #003B00 -> #00FF41 -> #ADFF2F
+        if t < 0.33 {
+            let s = t / 0.33;
+            Self::lerp_rgb((10, 10, 10), (0, 59, 0), s)
+        } else if t < 0.66 {
+            let s = (t - 0.33) / 0.33;
+            Self::lerp_rgb((0, 59, 0), (0, 255, 65), s)
+        } else {
+            let s = (t - 0.66) / 0.34;
+            Self::lerp_rgb((0, 255, 65), (173, 255, 47), s)
+        }
+    }
+
+    fn amber_gradient(t: f32) -> (u8, u8, u8) {
+        // Dark -> dark amber -> amber -> gold
+        // #1A1A0A -> #8B4000 -> #FFB000 -> #FFCC00
+        if t < 0.33 {
+            let s = t / 0.33;
+            Self::lerp_rgb((26, 26, 10), (139, 64, 0), s)
+        } else if t < 0.66 {
+            let s = (t - 0.33) / 0.33;
+            Self::lerp_rgb((139, 64, 0), (255, 176, 0), s)
+        } else {
+            let s = (t - 0.66) / 0.34;
+            Self::lerp_rgb((255, 176, 0), (255, 204, 0), s)
+        }
+    }
+
+    /// Linear interpolation between two RGB colors
+    #[inline]
+    fn lerp_rgb(c1: (u8, u8, u8), c2: (u8, u8, u8), t: f32) -> (u8, u8, u8) {
+        let r = c1.0 as f32 + (c2.0 as f32 - c1.0 as f32) * t;
+        let g = c1.1 as f32 + (c2.1 as f32 - c1.1 as f32) * t;
+        let b = c1.2 as f32 + (c2.2 as f32 - c1.2 as f32) * t;
+        (r as u8, g as u8, b as u8)
     }
 }
