@@ -249,11 +249,11 @@ pub struct SimulationSettings {
     pub boundary_behavior: BoundaryBehavior,
     /// Buffer distance between structure edge and spawn circle (5-50)
     pub spawn_radius_offset: f32,
-    /// Multiplier for escape distance (2.0-6.0)
+    /// Multiplier for escape distance (2.0-10.0)
     pub escape_multiplier: f32,
     /// Minimum spawn radius (20-100)
     pub min_spawn_radius: f32,
-    /// Maximum walk iterations before respawn (1000-50000)
+    /// Maximum walk iterations before respawn (1000-200000)
     pub max_walk_iterations: usize,
 
     // === Visual Parameters ===
@@ -272,7 +272,7 @@ impl Default for SimulationSettings {
             walk_step_size: 1.0,
             walk_bias_angle: 0.0,
             walk_bias_strength: 0.0,
-            radial_bias: 0.0,
+            radial_bias: 0.05, // Slight inward bias helps particles find aggregate
             adaptive_step: false, // Disabled by default for accurate DLA
             adaptive_step_factor: 3.0,
             lattice_walk: true, // Classic 4-direction lattice walk
@@ -288,9 +288,9 @@ impl Default for SimulationSettings {
             spawn_mode: SpawnMode::default(), // Circle
             boundary_behavior: BoundaryBehavior::Absorb, // Respawn at edges for unbounded feel
             spawn_radius_offset: 10.0,
-            escape_multiplier: 3.0, // Higher multiplier reduces premature respawns
+            escape_multiplier: 5.0, // Higher multiplier reduces premature respawns
             min_spawn_radius: 15.0, // Lower for faster small-cluster convergence
-            max_walk_iterations: 10000,
+            max_walk_iterations: 20000,
 
             // Visual
             color_mode: ColorMode::default(),
@@ -348,7 +348,7 @@ impl SimulationSettings {
 
     /// Adjust escape multiplier within bounds
     pub fn adjust_escape_multiplier(&mut self, delta: f32) {
-        self.escape_multiplier = (self.escape_multiplier + delta).clamp(2.0, 6.0);
+        self.escape_multiplier = (self.escape_multiplier + delta).clamp(2.0, 10.0);
     }
 
     /// Adjust min spawn radius within bounds
@@ -358,7 +358,7 @@ impl SimulationSettings {
 
     /// Adjust max walk iterations within bounds
     pub fn adjust_max_walk_iterations(&mut self, delta: i32) {
-        let new_val = (self.max_walk_iterations as i32 + delta).clamp(1000, 50000);
+        let new_val = (self.max_walk_iterations as i32 + delta).clamp(1000, 200000);
         self.max_walk_iterations = new_val as usize;
     }
 

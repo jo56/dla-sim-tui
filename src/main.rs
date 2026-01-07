@@ -103,7 +103,7 @@ struct Args {
     #[arg(long = "spawn-offset", default_value = "10.0")]
     spawn_offset: f32,
 
-    /// Multiplier for escape/respawn distance (2.0-6.0)
+    /// Multiplier for escape/respawn distance (2.0-10.0)
     #[arg(long = "escape-mult", default_value = "2.0")]
     escape_mult: f32,
 
@@ -111,7 +111,7 @@ struct Args {
     #[arg(long = "min-radius", default_value = "50.0")]
     min_radius: f32,
 
-    /// Maximum walk iterations before respawn (1000-50000)
+    /// Maximum walk iterations before respawn (1000-200000)
     #[arg(long = "max-iterations", default_value = "10000")]
     max_iterations: usize,
 
@@ -282,13 +282,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         app.simulation.settings.spawn_radius_offset = args.spawn_offset.clamp(5.0, 50.0);
     }
     if is_explicit("escape_mult") || use_default_args {
-        app.simulation.settings.escape_multiplier = args.escape_mult.clamp(2.0, 6.0);
+        app.simulation.settings.escape_multiplier = args.escape_mult.clamp(2.0, 10.0);
     }
     if is_explicit("min_radius") || use_default_args {
         app.simulation.settings.min_spawn_radius = args.min_radius.clamp(20.0, 100.0);
     }
     if is_explicit("max_iterations") || use_default_args {
-        app.simulation.settings.max_walk_iterations = args.max_iterations.clamp(1000, 50000);
+        app.simulation.settings.max_walk_iterations = args.max_iterations.clamp(1000, 200000);
     }
 
     // Visual settings
