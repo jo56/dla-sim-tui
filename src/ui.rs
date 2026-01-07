@@ -231,7 +231,7 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
         ]),
         Line::from(vec![
             Span::styled("█".repeat(filled), Style::default().fg(theme.border_color)),
-            Span::styled("░".repeat(empty), Style::default().fg(Color::DarkGray)),
+            Span::styled("░".repeat(empty), Style::default().fg(theme.dim_text_color)),
         ]),
         Line::from(Span::styled(status_text, Style::default().fg(status_color))),
     ];
@@ -855,6 +855,7 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
         settings.highlight_recent,
         settings.invert_colors,
         theme.text_color,
+        theme.highlight_color,
     );
 
     for cell in cells {
