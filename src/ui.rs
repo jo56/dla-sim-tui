@@ -208,7 +208,7 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
     } else if app.simulation.paused {
         ("PAUSED".to_string(), theme.highlight_color)
     } else if app.simulation.is_complete() {
-        ("COMPLETE".to_string(), Color::Green)
+        ("COMPLETE".to_string(), theme.highlight_color)
     } else {
         ("RUNNING".to_string(), theme.border_color)
     };
@@ -230,7 +230,7 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
             ),
         ]),
         Line::from(vec![
-            Span::styled("█".repeat(filled), Style::default().fg(Color::Green)),
+            Span::styled("█".repeat(filled), Style::default().fg(theme.border_color)),
             Span::styled("░".repeat(empty), Style::default().fg(Color::DarkGray)),
         ]),
         Line::from(Span::styled(status_text, Style::default().fg(status_color))),
@@ -854,6 +854,7 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
         settings.color_mode,
         settings.highlight_recent,
         settings.invert_colors,
+        theme.text_color,
     );
 
     for cell in cells {

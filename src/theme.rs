@@ -4,24 +4,20 @@ use serde::{Deserialize, Serialize};
 use crate::color::ColorScheme;
 
 /// Background mode for themes
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
 pub enum BackgroundMode {
     /// Use terminal's default background (transparent)
+    #[default]
     Transparent,
     /// Use a custom solid background color
     Solid(u8, u8, u8),
-}
-
-impl Default for BackgroundMode {
-    fn default() -> Self {
-        BackgroundMode::Transparent
-    }
 }
 
 /// Complete theme configuration
 #[derive(Debug, Clone)]
 pub struct Theme {
     /// Human-readable theme name
+    #[allow(dead_code)]
     pub name: &'static str,
     /// Particle color gradient scheme
     pub color_scheme: ColorScheme,
@@ -84,6 +80,7 @@ impl ThemeId {
         Self::ALL[(idx + Self::ALL.len() - 1) % Self::ALL.len()]
     }
 
+    #[allow(dead_code)]
     pub fn name(&self) -> &'static str {
         match self {
             ThemeId::Default => "Default",

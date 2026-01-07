@@ -43,6 +43,7 @@ pub fn render_to_braille(
     color_mode: ColorMode,
     highlight_recent: usize,
     invert_colors: bool,
+    fallback_color: Color,
 ) -> Vec<BrailleCell> {
     let sim_width = simulation.grid_width;
     let sim_height = simulation.grid_height;
@@ -117,7 +118,7 @@ pub fn render_to_braille(
                     let t = if invert_colors { 1.0 - avg_value } else { avg_value };
                     map_from_lut(color_lut, t)
                 } else {
-                    Color::White
+                    fallback_color
                 };
 
                 cells.push(BrailleCell {
