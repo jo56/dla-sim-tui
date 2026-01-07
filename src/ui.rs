@@ -13,7 +13,7 @@ const SIDEBAR_WIDTH: u16 = 22;
 const STATES_PANEL_WIDTH: u16 = 48;
 
 /// Max scroll for help content (generous to account for text wrapping on small screens)
-pub const HELP_CONTENT_LINES: u16 = 73;
+pub const HELP_CONTENT_LINES: u16 = 79;
 
 /// Number of lines in controls content (9 main + 10 non-shift + 11 Shift+letter hints)
 pub const CONTROLS_CONTENT_LINES: u16 = 30;
