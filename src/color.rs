@@ -23,12 +23,12 @@ pub enum ColorScheme {
     Grayscale,
     Ocean,
     Neon,
-    // Theme-specific gradients
-    RosePine,
-    Dracula,
-    Gruvbox,
-    TokyoNight,
-    Nord,
+    // Theme-specific gradients (renamed to match theme names)
+    Lagoon,
+    Violet,
+    Harvest,
+    Midnight,
+    Frost,
     Sunset,
     Matrix,
     Amber,
@@ -45,11 +45,11 @@ impl ColorScheme {
             ColorScheme::Grayscale => "Grayscale",
             ColorScheme::Ocean => "Ocean",
             ColorScheme::Neon => "Neon",
-            ColorScheme::RosePine => "Rose Pine",
-            ColorScheme::Dracula => "Dracula",
-            ColorScheme::Gruvbox => "Gruvbox",
-            ColorScheme::TokyoNight => "Tokyo Night",
-            ColorScheme::Nord => "Nord",
+            ColorScheme::Lagoon => "Lagoon",
+            ColorScheme::Violet => "Violet",
+            ColorScheme::Harvest => "Harvest",
+            ColorScheme::Midnight => "Midnight",
+            ColorScheme::Frost => "Frost",
             ColorScheme::Sunset => "Sunset",
             ColorScheme::Matrix => "Matrix",
             ColorScheme::Amber => "Amber",
@@ -65,12 +65,12 @@ impl ColorScheme {
             ColorScheme::Rainbow => ColorScheme::Grayscale,
             ColorScheme::Grayscale => ColorScheme::Ocean,
             ColorScheme::Ocean => ColorScheme::Neon,
-            ColorScheme::Neon => ColorScheme::RosePine,
-            ColorScheme::RosePine => ColorScheme::Dracula,
-            ColorScheme::Dracula => ColorScheme::Gruvbox,
-            ColorScheme::Gruvbox => ColorScheme::TokyoNight,
-            ColorScheme::TokyoNight => ColorScheme::Nord,
-            ColorScheme::Nord => ColorScheme::Sunset,
+            ColorScheme::Neon => ColorScheme::Lagoon,
+            ColorScheme::Lagoon => ColorScheme::Violet,
+            ColorScheme::Violet => ColorScheme::Harvest,
+            ColorScheme::Harvest => ColorScheme::Midnight,
+            ColorScheme::Midnight => ColorScheme::Frost,
+            ColorScheme::Frost => ColorScheme::Sunset,
             ColorScheme::Sunset => ColorScheme::Matrix,
             ColorScheme::Matrix => ColorScheme::Amber,
             ColorScheme::Amber => ColorScheme::Ice,
@@ -87,12 +87,12 @@ impl ColorScheme {
             ColorScheme::Grayscale => ColorScheme::Rainbow,
             ColorScheme::Ocean => ColorScheme::Grayscale,
             ColorScheme::Neon => ColorScheme::Ocean,
-            ColorScheme::RosePine => ColorScheme::Neon,
-            ColorScheme::Dracula => ColorScheme::RosePine,
-            ColorScheme::Gruvbox => ColorScheme::Dracula,
-            ColorScheme::TokyoNight => ColorScheme::Gruvbox,
-            ColorScheme::Nord => ColorScheme::TokyoNight,
-            ColorScheme::Sunset => ColorScheme::Nord,
+            ColorScheme::Lagoon => ColorScheme::Neon,
+            ColorScheme::Violet => ColorScheme::Lagoon,
+            ColorScheme::Harvest => ColorScheme::Violet,
+            ColorScheme::Midnight => ColorScheme::Harvest,
+            ColorScheme::Frost => ColorScheme::Midnight,
+            ColorScheme::Sunset => ColorScheme::Frost,
             ColorScheme::Matrix => ColorScheme::Sunset,
             ColorScheme::Amber => ColorScheme::Matrix,
         }
@@ -116,11 +116,11 @@ impl ColorScheme {
             ColorScheme::Grayscale => Self::grayscale_gradient(t),
             ColorScheme::Ocean => Self::ocean_gradient(t),
             ColorScheme::Neon => Self::neon_gradient(t),
-            ColorScheme::RosePine => Self::rosepine_gradient(t),
-            ColorScheme::Dracula => Self::dracula_gradient(t),
-            ColorScheme::Gruvbox => Self::gruvbox_gradient(t),
-            ColorScheme::TokyoNight => Self::tokyonight_gradient(t),
-            ColorScheme::Nord => Self::nord_gradient(t),
+            ColorScheme::Lagoon => Self::lagoon_gradient(t),
+            ColorScheme::Violet => Self::violet_gradient(t),
+            ColorScheme::Harvest => Self::harvest_gradient(t),
+            ColorScheme::Midnight => Self::midnight_gradient(t),
+            ColorScheme::Frost => Self::frost_gradient(t),
             ColorScheme::Sunset => Self::sunset_gradient(t),
             ColorScheme::Matrix => Self::matrix_gradient(t),
             ColorScheme::Amber => Self::amber_gradient(t),
@@ -235,8 +235,8 @@ impl ColorScheme {
 
     // Theme-specific gradients
 
-    fn rosepine_gradient(t: f32) -> (u8, u8, u8) {
-        // Deep purple -> foam (teal) -> gold -> rose
+    fn lagoon_gradient(t: f32) -> (u8, u8, u8) {
+        // Deep purple -> teal -> gold -> rose (coastal lagoon colors)
         // #191724 -> #31748F -> #F6C177 -> #EBBCBA
         if t < 0.33 {
             let s = t / 0.33;
@@ -250,7 +250,7 @@ impl ColorScheme {
         }
     }
 
-    fn dracula_gradient(t: f32) -> (u8, u8, u8) {
+    fn violet_gradient(t: f32) -> (u8, u8, u8) {
         // Dark background -> purple -> pink -> cyan
         // #282A36 -> #BD93F9 -> #FF79C6 -> #8BE9FD
         if t < 0.33 {
@@ -265,8 +265,8 @@ impl ColorScheme {
         }
     }
 
-    fn gruvbox_gradient(t: f32) -> (u8, u8, u8) {
-        // Dark background -> orange -> yellow -> bright yellow
+    fn harvest_gradient(t: f32) -> (u8, u8, u8) {
+        // Dark background -> orange -> yellow -> bright yellow (autumn harvest)
         // #282828 -> #D65D0E -> #D79921 -> #FABD2F
         if t < 0.33 {
             let s = t / 0.33;
@@ -280,8 +280,8 @@ impl ColorScheme {
         }
     }
 
-    fn tokyonight_gradient(t: f32) -> (u8, u8, u8) {
-        // Deep blue -> blue -> purple -> light lavender
+    fn midnight_gradient(t: f32) -> (u8, u8, u8) {
+        // Deep blue -> blue -> purple -> light lavender (midnight sky)
         // #1A1B26 -> #7AA2F7 -> #BB9AF7 -> #C0CAF5
         if t < 0.33 {
             let s = t / 0.33;
@@ -295,8 +295,8 @@ impl ColorScheme {
         }
     }
 
-    fn nord_gradient(t: f32) -> (u8, u8, u8) {
-        // Polar night -> frost blue -> bright frost -> snow
+    fn frost_gradient(t: f32) -> (u8, u8, u8) {
+        // Dark -> frost blue -> bright frost -> snow (icy frost)
         // #2E3440 -> #5E81AC -> #88C0D0 -> #ECEFF4
         if t < 0.33 {
             let s = t / 0.33;

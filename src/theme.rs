@@ -42,15 +42,15 @@ pub struct Theme {
 pub enum ThemeId {
     #[default]
     Default,
-    // Terminal-integrated (transparent background)
-    RosePine,
-    RosePineMoon,
-    Dracula,
-    GruvboxDark,
-    TokyoNight,
-    Catppuccin,
-    Nord,
-    // Custom background themes
+    // Descriptive theme names
+    Lagoon,
+    Cove,
+    Violet,
+    Harvest,
+    Midnight,
+    Lavender,
+    Frost,
+    // Custom themes
     DeepSpace,
     Sunset,
     Matrix,
@@ -61,13 +61,13 @@ impl ThemeId {
     /// Get all theme IDs in order
     const ALL: [ThemeId; 12] = [
         ThemeId::Default,
-        ThemeId::RosePine,
-        ThemeId::RosePineMoon,
-        ThemeId::Dracula,
-        ThemeId::GruvboxDark,
-        ThemeId::TokyoNight,
-        ThemeId::Catppuccin,
-        ThemeId::Nord,
+        ThemeId::Lagoon,
+        ThemeId::Cove,
+        ThemeId::Violet,
+        ThemeId::Harvest,
+        ThemeId::Midnight,
+        ThemeId::Lavender,
+        ThemeId::Frost,
         ThemeId::DeepSpace,
         ThemeId::Sunset,
         ThemeId::Matrix,
@@ -87,13 +87,13 @@ impl ThemeId {
     pub fn name(&self) -> &'static str {
         match self {
             ThemeId::Default => "Default",
-            ThemeId::RosePine => "Rose Pine",
-            ThemeId::RosePineMoon => "Rose Pine Moon",
-            ThemeId::Dracula => "Dracula",
-            ThemeId::GruvboxDark => "Gruvbox Dark",
-            ThemeId::TokyoNight => "Tokyo Night",
-            ThemeId::Catppuccin => "Catppuccin",
-            ThemeId::Nord => "Nord",
+            ThemeId::Lagoon => "Lagoon",
+            ThemeId::Cove => "Cove",
+            ThemeId::Violet => "Violet",
+            ThemeId::Harvest => "Harvest",
+            ThemeId::Midnight => "Midnight",
+            ThemeId::Lavender => "Lavender",
+            ThemeId::Frost => "Frost",
             ThemeId::DeepSpace => "Deep Space",
             ThemeId::Sunset => "Sunset",
             ThemeId::Matrix => "Matrix",
@@ -111,70 +111,70 @@ impl ThemeId {
                 highlight_color: Color::Yellow,
                 text_color: Color::White,
                 dim_text_color: Color::Gray,
-                background: BackgroundMode::Transparent,
+                background: BackgroundMode::Solid(26, 26, 26),  // #1a1a1a
             },
-            ThemeId::RosePine => Theme {
-                name: "Rose Pine",
-                color_scheme: ColorScheme::RosePine,
-                border_color: Color::Rgb(49, 116, 143),  // #31748F foam
+            ThemeId::Lagoon => Theme {
+                name: "Lagoon",
+                color_scheme: ColorScheme::Lagoon,
+                border_color: Color::Rgb(49, 116, 143),  // #31748F teal
                 highlight_color: Color::Rgb(246, 193, 119),  // #F6C177 gold
                 text_color: Color::Rgb(224, 222, 244),  // #E0DEF4
                 dim_text_color: Color::Rgb(144, 140, 170),  // #908CAA
-                background: BackgroundMode::Transparent,
+                background: BackgroundMode::Solid(25, 23, 36),  // #191724
             },
-            ThemeId::RosePineMoon => Theme {
-                name: "Rose Pine Moon",
-                color_scheme: ColorScheme::RosePine,
-                border_color: Color::Rgb(62, 143, 176),  // #3E8FB0
+            ThemeId::Cove => Theme {
+                name: "Cove",
+                color_scheme: ColorScheme::Lagoon,  // Shares gradient with Lagoon
+                border_color: Color::Rgb(62, 143, 176),  // #3E8FB0 cooler teal
                 highlight_color: Color::Rgb(246, 193, 119),  // #F6C177 gold
                 text_color: Color::Rgb(224, 222, 244),  // #E0DEF4
                 dim_text_color: Color::Rgb(129, 124, 156),  // #817C9C
-                background: BackgroundMode::Transparent,
+                background: BackgroundMode::Solid(35, 33, 54),  // #232136
             },
-            ThemeId::Dracula => Theme {
-                name: "Dracula",
-                color_scheme: ColorScheme::Dracula,
+            ThemeId::Violet => Theme {
+                name: "Violet",
+                color_scheme: ColorScheme::Violet,
                 border_color: Color::Rgb(189, 147, 249),  // #BD93F9 purple
                 highlight_color: Color::Rgb(241, 250, 140),  // #F1FA8C yellow
                 text_color: Color::Rgb(248, 248, 242),  // #F8F8F2
                 dim_text_color: Color::Rgb(98, 114, 164),  // #6272A4
-                background: BackgroundMode::Transparent,
+                background: BackgroundMode::Solid(40, 42, 54),  // #282a36
             },
-            ThemeId::GruvboxDark => Theme {
-                name: "Gruvbox Dark",
-                color_scheme: ColorScheme::Gruvbox,
-                border_color: Color::Rgb(131, 165, 152),  // #83A598 aqua
+            ThemeId::Harvest => Theme {
+                name: "Harvest",
+                color_scheme: ColorScheme::Harvest,
+                border_color: Color::Rgb(131, 165, 152),  // #83A598 teal
                 highlight_color: Color::Rgb(250, 189, 47),  // #FABD2F yellow
-                text_color: Color::Rgb(235, 219, 178),  // #EBDBB2
+                text_color: Color::Rgb(235, 219, 178),  // #EBDBB2 cream
                 dim_text_color: Color::Rgb(146, 131, 116),  // #928374
-                background: BackgroundMode::Transparent,
+                background: BackgroundMode::Solid(40, 40, 40),  // #282828
             },
-            ThemeId::TokyoNight => Theme {
-                name: "Tokyo Night",
-                color_scheme: ColorScheme::TokyoNight,
+            ThemeId::Midnight => Theme {
+                name: "Midnight",
+                color_scheme: ColorScheme::Midnight,
                 border_color: Color::Rgb(122, 162, 247),  // #7AA2F7 blue
-                highlight_color: Color::Rgb(224, 175, 104),  // #E0AF68 yellow
+                highlight_color: Color::Rgb(224, 175, 104),  // #E0AF68 gold
                 text_color: Color::Rgb(169, 177, 214),  // #A9B1D6
                 dim_text_color: Color::Rgb(86, 95, 137),  // #565F89
-                background: BackgroundMode::Transparent,
+                background: BackgroundMode::Solid(26, 27, 38),  // #1a1b26
             },
-            ThemeId::Catppuccin => Theme {
-                name: "Catppuccin",
+            ThemeId::Lavender => Theme {
+                name: "Lavender",
                 color_scheme: ColorScheme::Plasma,  // Uses existing Plasma gradient
                 border_color: Color::Rgb(137, 180, 250),  // #89B4FA blue
-                highlight_color: Color::Rgb(249, 226, 175),  // #F9E2AF yellow
+                highlight_color: Color::Rgb(249, 226, 175),  // #F9E2AF cream
                 text_color: Color::Rgb(205, 214, 244),  // #CDD6F4
                 dim_text_color: Color::Rgb(108, 112, 134),  // #6C7086
-                background: BackgroundMode::Transparent,
+                background: BackgroundMode::Solid(30, 30, 46),  // #1e1e2e
             },
-            ThemeId::Nord => Theme {
-                name: "Nord",
-                color_scheme: ColorScheme::Nord,
-                border_color: Color::Rgb(136, 192, 208),  // #88C0D0 frost
+            ThemeId::Frost => Theme {
+                name: "Frost",
+                color_scheme: ColorScheme::Frost,
+                border_color: Color::Rgb(136, 192, 208),  // #88C0D0 cyan
                 highlight_color: Color::Rgb(235, 203, 139),  // #EBCB8B yellow
                 text_color: Color::Rgb(236, 239, 244),  // #ECEFF4
                 dim_text_color: Color::Rgb(76, 86, 106),  // #4C566A
-                background: BackgroundMode::Transparent,
+                background: BackgroundMode::Solid(46, 52, 64),  // #2e3440
             },
             ThemeId::DeepSpace => Theme {
                 name: "Deep Space",
@@ -220,13 +220,23 @@ impl ThemeId {
 pub fn parse_theme(s: &str) -> ThemeId {
     match s.to_lowercase().replace(['-', '_', ' '], "").as_str() {
         "default" => ThemeId::Default,
-        "rosepine" => ThemeId::RosePine,
-        "rosepinemoon" => ThemeId::RosePineMoon,
-        "dracula" => ThemeId::Dracula,
-        "gruvbox" | "gruvboxdark" => ThemeId::GruvboxDark,
-        "tokyonight" => ThemeId::TokyoNight,
-        "catppuccin" | "catppuccinmocha" => ThemeId::Catppuccin,
-        "nord" => ThemeId::Nord,
+        // New descriptive names
+        "lagoon" => ThemeId::Lagoon,
+        "cove" => ThemeId::Cove,
+        "violet" => ThemeId::Violet,
+        "harvest" => ThemeId::Harvest,
+        "midnight" => ThemeId::Midnight,
+        "lavender" => ThemeId::Lavender,
+        "frost" => ThemeId::Frost,
+        // Legacy aliases for backwards compatibility
+        "rosepine" => ThemeId::Lagoon,
+        "rosepinemoon" => ThemeId::Cove,
+        "dracula" => ThemeId::Violet,
+        "gruvbox" | "gruvboxdark" => ThemeId::Harvest,
+        "tokyonight" => ThemeId::Midnight,
+        "catppuccin" | "catppuccinmocha" => ThemeId::Lavender,
+        "nord" => ThemeId::Frost,
+        // Other themes
         "deepspace" | "space" => ThemeId::DeepSpace,
         "sunset" => ThemeId::Sunset,
         "matrix" => ThemeId::Matrix,
