@@ -33,6 +33,10 @@ pub struct Theme {
     pub particle_color: Color,
     /// Background handling
     pub background: BackgroundMode,
+    /// Error/recording indicator color
+    pub error_color: Color,
+    /// Success message color
+    pub success_color: Color,
 }
 
 /// Theme identifier enum for CLI selection and cycling
@@ -112,6 +116,8 @@ impl ThemeId {
                 dim_text_color: Color::Rgb(160, 160, 160), // Visible gray
                 particle_color: Color::Rgb(0, 255, 255),   // Bright cyan
                 background: BackgroundMode::Solid(8, 8, 12),  // Near-black #08080C
+                error_color: Color::Rgb(255, 80, 80),      // Bright red
+                success_color: Color::Rgb(80, 255, 80),    // Bright green
             },
             ThemeId::Lagoon => Theme {
                 name: "Lagoon",
@@ -122,16 +128,20 @@ impl ThemeId {
                 dim_text_color: Color::Rgb(144, 140, 170),  // #908CAA
                 particle_color: Color::Rgb(156, 207, 216),  // #9CCFD8 foam
                 background: BackgroundMode::Solid(25, 23, 36),  // #191724
+                error_color: Color::Rgb(235, 111, 146),     // Rose Pine love
+                success_color: Color::Rgb(156, 207, 216),   // Rose Pine foam
             },
             ThemeId::Bluemono => Theme {
                 name: "Bluemono",
                 color_scheme: ColorScheme::Ocean,  // Blue monochrome gradient
-                border_color: Color::Rgb(0, 0, 0),  // Black borders
-                highlight_color: Color::Rgb(0, 0, 0),  // Black highlights
-                text_color: Color::Rgb(0, 0, 0),  // Black text
-                dim_text_color: Color::Rgb(0, 0, 0),  // Black labels
-                particle_color: Color::Rgb(30, 85, 130),  // Deep blue for contrast
+                border_color: Color::Rgb(60, 60, 80),       // Dark blue-gray borders
+                highlight_color: Color::Rgb(0, 100, 180),   // Ocean blue for highlights
+                text_color: Color::Rgb(30, 30, 40),         // Near-black text
+                dim_text_color: Color::Rgb(120, 120, 140),  // Medium gray labels
+                particle_color: Color::Rgb(30, 85, 130),    // Deep blue for contrast
                 background: BackgroundMode::Solid(252, 246, 248),  // #FCF6F8 soft white
+                error_color: Color::Rgb(180, 60, 60),       // Darker red for light bg
+                success_color: Color::Rgb(60, 140, 60),     // Darker green for light bg
             },
             ThemeId::Violet => Theme {
                 name: "Violet",
@@ -142,6 +152,8 @@ impl ThemeId {
                 dim_text_color: Color::Rgb(98, 114, 164),  // #6272A4
                 particle_color: Color::Rgb(139, 233, 253),  // #8BE9FD cyan
                 background: BackgroundMode::Solid(40, 42, 54),  // #282a36
+                error_color: Color::Rgb(255, 85, 85),       // Dracula red
+                success_color: Color::Rgb(80, 250, 123),    // Dracula green
             },
             ThemeId::Harvest => Theme {
                 name: "Harvest",
@@ -152,6 +164,8 @@ impl ThemeId {
                 dim_text_color: Color::Rgb(146, 131, 116),  // #928374
                 particle_color: Color::Rgb(254, 128, 25),  // #FE8019 bright orange
                 background: BackgroundMode::Solid(40, 40, 40),  // #282828
+                error_color: Color::Rgb(251, 73, 52),       // Gruvbox red
+                success_color: Color::Rgb(184, 187, 38),    // Gruvbox green
             },
             ThemeId::Midnight => Theme {
                 name: "Midnight",
@@ -162,6 +176,8 @@ impl ThemeId {
                 dim_text_color: Color::Rgb(86, 95, 137),  // #565F89
                 particle_color: Color::Rgb(122, 162, 247),  // #7AA2F7 blue
                 background: BackgroundMode::Solid(26, 27, 38),  // #1a1b26
+                error_color: Color::Rgb(247, 118, 142),     // Tokyo Night red
+                success_color: Color::Rgb(158, 206, 106),   // Tokyo Night green
             },
             ThemeId::Rainbow => Theme {
                 name: "Rainbow",
@@ -172,6 +188,8 @@ impl ThemeId {
                 dim_text_color: Color::Rgb(108, 112, 134),  // #6C7086
                 particle_color: Color::Rgb(203, 166, 247),  // #CBA6F7 mauve
                 background: BackgroundMode::Solid(30, 30, 46),  // #1e1e2e
+                error_color: Color::Rgb(243, 139, 168),     // Catppuccin red
+                success_color: Color::Rgb(166, 227, 161),   // Catppuccin green
             },
             ThemeId::Frost => Theme {
                 name: "Frost",
@@ -182,6 +200,8 @@ impl ThemeId {
                 dim_text_color: Color::Rgb(76, 86, 106),  // #4C566A
                 particle_color: Color::Rgb(136, 192, 208),  // #88C0D0 frost cyan
                 background: BackgroundMode::Solid(46, 52, 64),  // #2e3440
+                error_color: Color::Rgb(191, 97, 106),      // Nord red
+                success_color: Color::Rgb(163, 190, 140),   // Nord green
             },
             ThemeId::DeepSpace => Theme {
                 name: "Deep Space",
@@ -192,6 +212,8 @@ impl ThemeId {
                 dim_text_color: Color::Rgb(110, 118, 129),  // #6E7681
                 particle_color: Color::Rgb(88, 166, 255),  // #58A6FF bright blue
                 background: BackgroundMode::Solid(13, 17, 23),  // #0D1117
+                error_color: Color::Rgb(248, 81, 73),       // GitHub red
+                success_color: Color::Rgb(63, 185, 80),     // GitHub green
             },
             ThemeId::Sunset => Theme {
                 name: "Sunset",
@@ -199,9 +221,11 @@ impl ThemeId {
                 border_color: Color::Rgb(255, 107, 107),  // #FF6B6B
                 highlight_color: Color::Rgb(255, 230, 109),  // #FFE66D
                 text_color: Color::Rgb(247, 255, 247),  // #F7FFF7
-                dim_text_color: Color::Rgb(180, 160, 180),  // muted lavender
+                dim_text_color: Color::Rgb(160, 140, 170),  // muted lavender (improved contrast)
                 particle_color: Color::Rgb(255, 160, 122),  // Light salmon
                 background: BackgroundMode::Solid(26, 20, 35),  // #1A1423
+                error_color: Color::Rgb(255, 107, 107),     // Warm red
+                success_color: Color::Rgb(170, 255, 170),   // Soft green
             },
             ThemeId::Matrix => Theme {
                 name: "Matrix",
@@ -212,6 +236,8 @@ impl ThemeId {
                 dim_text_color: Color::Rgb(0, 128, 0),  // darker green
                 particle_color: Color::Rgb(0, 255, 65),  // #00FF41 matrix green
                 background: BackgroundMode::Solid(10, 10, 10),  // #0A0A0A
+                error_color: Color::Rgb(255, 0, 0),         // Pure red
+                success_color: Color::Rgb(0, 255, 65),      // Matrix green
             },
             ThemeId::Amber => Theme {
                 name: "Amber",
@@ -222,6 +248,8 @@ impl ThemeId {
                 dim_text_color: Color::Rgb(180, 120, 50),  // muted amber
                 particle_color: Color::Rgb(255, 176, 0),  // #FFB000 amber
                 background: BackgroundMode::Solid(26, 26, 10),  // #1A1A0A
+                error_color: Color::Rgb(255, 100, 100),     // Red-amber
+                success_color: Color::Rgb(200, 255, 100),   // Yellow-green amber
             },
         }
     }

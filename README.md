@@ -22,6 +22,7 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 - **Multiple seed patterns** - Points, lines, rings, blocks, spokes, scatter/noise blobs and more
 - **12 color themes** - Lagoon, Violet, Harvest, Midnight, Frost, and more
 - **16 color gradients** - Theme-matched gradients plus classic options (Ice, Fire, Plasma, etc.)
+- **12 built-in presets** - Quick-select preset configurations for different growth patterns
 - **Parameter popup** - Quick access to any parameter via Shift+letter
 - **Three view modes** - Default (sidebar + canvas), States (all params visible), Fullscreen (canvas only)
 - **Config export/import** - Save and load settings as JSON files
@@ -219,6 +220,8 @@ If you request `.mp4` or `.webm` but FFmpeg isn't installed, the recording will 
 | `V` | Cycle view mode (Default/States/Fullscreen) |
 | `` ` `` | Start/stop recording |
 | `Shift+X` | Export config to file |
+| `Shift+L` | Load preset |
+| `Shift+K` | Save preset |
 | `H` | Show help (Up/Down to scroll) |
 | `Q` | Quit |
 
@@ -392,6 +395,33 @@ Press number keys 1-0 to quickly select:
 | 8 | Starburst | Radial spokes with rim - strong anisotropy |
 | 9 | Noise Patch | Dense noisy blob - asymmetric drift |
 | 0 | Scatter | Randomized small seeds near center |
+
+### Presets
+
+Presets allow you to quickly save and load simulation configurations.
+
+**Loading presets:** Press `Shift+L` to open the preset loader. Use Up/Down to navigate, Enter to load, Esc to cancel.
+
+**Saving presets:** Press `Shift+K` to save your current settings as a new preset. Enter a name and press Enter.
+
+12 built-in presets provide quick access to interesting configurations:
+
+| Preset | Description |
+|--------|-------------|
+| Classic | Standard DLA with default settings |
+| Dense | Compact structures with multiple contact requirement |
+| Dendritic | Thin, branching dendrite patterns |
+| Snowflake | Symmetric snowflake-like growth |
+| Coral | Thick, coral-like structures |
+| Wind-swept | Asymmetric growth with directional bias |
+| Fractal Forest | Multiple growth centers competing |
+| Edge Growth | Particles spawn from grid edges |
+| Angular | Sharp, angular growth patterns |
+| Blob | Dense, blob-like structures |
+| Gradient | Dense core with sparse edges |
+| Rain | Particles fall from top edge |
+
+User-created presets are saved to `~/.config/dla-sim-tui/presets/` (or equivalent Windows location).
 
 ## Dependencies
 

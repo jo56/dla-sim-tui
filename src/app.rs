@@ -1,6 +1,7 @@
 use crate::braille;
 use crate::color::{ColorLut, ColorScheme};
 use crate::config::AppConfig;
+use crate::presets::{Preset, PresetManager};
 use crate::recorder::Recorder;
 use crate::simulation::{DlaSimulation, SeedPattern};
 use crate::theme::{Theme, ThemeId};
@@ -19,6 +20,13 @@ pub struct TextInputPopup {
     pub title: &'static str,
     pub input: String,
     pub cursor_pos: usize,
+}
+
+/// Popup for selecting presets
+#[derive(Debug, Clone)]
+pub struct PresetPopup {
+    pub names: Vec<String>,
+    pub selected_idx: usize,
 }
 
 impl TextInputPopup {
@@ -268,6 +276,11 @@ pub struct App {
     // Theme state
     pub theme_id: ThemeId,
     pub theme: Theme,
+    // Preset state
+    pub preset_manager: PresetManager,
+    pub preset_popup: Option<PresetPopup>,
+    pub preset_save_popup: Option<TextInputPopup>,
+    pub preset_result: Option<Result<String, String>>,
 }
 
 impl App {
@@ -296,6 +309,10 @@ impl App {
             recording_was_paused: false,
             theme_id,
             theme,
+            preset_manager: PresetManager::new(),
+            preset_popup: None,
+            preset_save_popup: None,
+            preset_result: None,
         }
     }
 
@@ -831,5 +848,105 @@ impl App {
         self.theme = self.theme_id.theme();
         self.color_scheme = self.theme.color_scheme;
         self.color_lut = self.color_scheme.build_lut();
+    }
+
+    // === Preset methods ===
+
+    /// Open preset load popup
+    pub fn open_preset_popup(&mut self) {
+        let names: Vec<String> = self.preset_manager.preset_names()
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
+        if !names.is_empty() {
+            self.preset_popup = Some(PresetPopup {
+                names,
+                selected_idx: 0,
+            });
+        }
+    }
+
+    /// Close preset popup
+    pub fn close_preset_popup(&mut self) {
+        self.preset_popup = None;
+    }
+
+    /// Open preset save popup
+    pub fn open_preset_save_popup(&mut self) {
+        self.preset_save_popup = Some(TextInputPopup::new(" Save Preset ", "my-preset"));
+    }
+
+    /// Close preset save popup
+    pub fn close_preset_save_popup(&mut self) {
+        self.preset_save_popup = None;
+    }
+
+    /// Confirm save preset
+    pub fn confirm_preset_save(&mut self) {
+        if let Some(popup) = self.preset_save_popup.take() {
+            if !popup.input.trim().is_empty() {
+                self.save_preset(popup.input.trim().to_string());
+            }
+        }
+    }
+
+    /// Navigate up in preset popup
+    pub fn preset_popup_nav_up(&mut self) {
+        if let Some(popup) = &mut self.preset_popup {
+            if popup.selected_idx > 0 {
+                popup.selected_idx -= 1;
+            } else {
+                popup.selected_idx = popup.names.len().saturating_sub(1);
+            }
+        }
+    }
+
+    /// Navigate down in preset popup
+    pub fn preset_popup_nav_down(&mut self) {
+        if let Some(popup) = &mut self.preset_popup {
+            if popup.selected_idx < popup.names.len().saturating_sub(1) {
+                popup.selected_idx += 1;
+            } else {
+                popup.selected_idx = 0;
+            }
+        }
+    }
+
+    /// Load selected preset and close popup
+    pub fn load_selected_preset(&mut self) {
+        if let Some(popup) = &self.preset_popup {
+            if let Some(name) = popup.names.get(popup.selected_idx) {
+                if let Some(preset) = self.preset_manager.find(name) {
+                    // Apply preset settings
+                    self.simulation.settings = preset.settings.clone();
+                    self.simulation.stickiness = preset.base_stickiness;
+                    self.simulation.num_particles = preset.num_particles;
+                    self.simulation.reset_with_seed(preset.seed_pattern);
+                    self.preset_result = Some(Ok(format!("Loaded: {}", name)));
+                }
+            }
+        }
+        self.preset_popup = None;
+    }
+
+    /// Save current settings as a preset
+    pub fn save_preset(&mut self, name: String) {
+        let preset = Preset::new(
+            name.clone(),
+            "User preset",
+            self.simulation.settings.clone(),
+            self.simulation.seed_pattern,
+            self.simulation.stickiness,
+            self.simulation.num_particles,
+        );
+        match self.preset_manager.save_preset(preset) {
+            Ok(()) => self.preset_result = Some(Ok(format!("Saved: {}", name))),
+            Err(e) => self.preset_result = Some(Err(e)),
+        }
+    }
+
+    /// Clear preset result (call after displaying it)
+    pub fn clear_preset_result(&mut self) {
+        self.preset_result = None;
     }
 }

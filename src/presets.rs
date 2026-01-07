@@ -7,7 +7,6 @@ use std::fs;
 use std::path::PathBuf;
 
 /// A named preset containing simulation settings
-#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Preset {
     pub name: String,
@@ -18,7 +17,6 @@ pub struct Preset {
     pub num_particles: usize,
 }
 
-#[allow(dead_code)]
 impl Preset {
     pub fn new(
         name: impl Into<String>,
@@ -40,7 +38,6 @@ impl Preset {
 }
 
 /// Manager for loading and saving presets
-#[allow(dead_code)]
 pub struct PresetManager {
     /// Built-in presets that ship with the app
     pub builtin: Vec<Preset>,
@@ -48,14 +45,12 @@ pub struct PresetManager {
     pub user: Vec<Preset>,
 }
 
-#[allow(dead_code)]
 impl Default for PresetManager {
     fn default() -> Self {
         Self::new()
     }
 }
 
-#[allow(dead_code)]
 impl PresetManager {
     pub fn new() -> Self {
         let mut manager = Self {

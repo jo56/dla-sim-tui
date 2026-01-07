@@ -1,4 +1,4 @@
-use crate::app::{App, Focus, ParamPopup, TextInputPopup, ViewMode};
+use crate::app::{App, Focus, ParamPopup, PresetPopup, TextInputPopup, ViewMode};
 use crate::braille;
 use crate::theme::BackgroundMode;
 use ratatui::{
@@ -15,8 +15,8 @@ const STATES_PANEL_WIDTH: u16 = 48;
 /// Max scroll for help content (generous to account for text wrapping on small screens)
 pub const HELP_CONTENT_LINES: u16 = 73;
 
-/// Number of lines in controls content (7 main + 18 Shift+letter hints + 1 record)
-pub const CONTROLS_CONTENT_LINES: u16 = 27;
+/// Number of lines in controls content (7 main + 18 Shift+letter hints + 1 record + 2 presets)
+pub const CONTROLS_CONTENT_LINES: u16 = 29;
 
 /// Number of lines in parameters content
 pub const PARAMS_CONTENT_LINES: u16 = 24;
@@ -75,7 +75,7 @@ pub fn render(frame: &mut Frame, app: &App) {
 
     // Render export result toast if present
     if let Some(result) = &app.export_result {
-        render_export_result(frame, area, result);
+        render_export_result(frame, area, result, &app.theme);
     }
 
     // Render recording popup if open (overlays everything)
@@ -85,7 +85,22 @@ pub fn render(frame: &mut Frame, app: &App) {
 
     // Render recording result toast if present
     if let Some(result) = &app.recording_result {
-        render_recording_result(frame, area, result);
+        render_recording_result(frame, area, result, &app.theme);
+    }
+
+    // Render preset popup if open
+    if let Some(popup) = &app.preset_popup {
+        render_preset_popup(frame, area, popup, &app.theme);
+    }
+
+    // Render preset save popup if open
+    if let Some(popup) = &app.preset_save_popup {
+        render_preset_save_popup(frame, area, popup, &app.theme);
+    }
+
+    // Render preset result toast if present
+    if let Some(result) = &app.preset_result {
+        render_preset_result(frame, area, result, &app.theme);
     }
 }
 
@@ -204,7 +219,7 @@ fn render_status_box(frame: &mut Frame, area: Rect, app: &App) {
     // Recording indicator takes priority, then simulation status
     let (status_text, status_color) = if app.is_recording() {
         let frame_count = app.recorder.frame_count().unwrap_or(0);
-        (format!("REC {}", frame_count), Color::Red)
+        (format!("REC {}", frame_count), theme.error_color)
     } else if app.simulation.paused {
         ("PAUSED".to_string(), theme.highlight_color)
     } else if app.simulation.is_complete() {
@@ -594,6 +609,16 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::raw(" "),
             Span::styled("`:", key_style),
             Span::styled(" record", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+L:", key_style),
+            Span::styled(" load preset", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+K:", key_style),
+            Span::styled(" save preset", desc_style),
         ]),
     ];
 
@@ -1142,10 +1167,10 @@ fn render_export_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup, th
 }
 
 /// Render export result toast (success or error message)
-fn render_export_result(frame: &mut Frame, area: Rect, result: &Result<String, String>) {
+fn render_export_result(frame: &mut Frame, area: Rect, result: &Result<String, String>, theme: &crate::theme::Theme) {
     let (message, color) = match result {
-        Ok(filename) => (format!("Saved: {}", filename), Color::Green),
-        Err(e) => (format!("Error: {}", e), Color::Red),
+        Ok(filename) => (format!("Saved: {}", filename), theme.success_color),
+        Err(e) => (format!("Error: {}", e), theme.error_color),
     };
 
     let msg_width = (message.len() as u16 + 4).min(area.width.saturating_sub(4));
@@ -1224,7 +1249,7 @@ fn render_recording_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup,
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Double)
-        .border_style(Style::default().fg(Color::Red))
+        .border_style(Style::default().fg(theme.error_color))
         .title(popup.title);
 
     let paragraph = Paragraph::new(content).block(block);
@@ -1232,10 +1257,10 @@ fn render_recording_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup,
 }
 
 /// Render recording result toast (success or error message)
-fn render_recording_result(frame: &mut Frame, area: Rect, result: &Result<String, String>) {
+fn render_recording_result(frame: &mut Frame, area: Rect, result: &Result<String, String>, theme: &crate::theme::Theme) {
     let (message, color) = match result {
-        Ok(msg) => (msg.clone(), Color::Green),
-        Err(e) => (format!("Error: {}", e), Color::Red),
+        Ok(msg) => (msg.clone(), theme.success_color),
+        Err(e) => (format!("Error: {}", e), theme.error_color),
     };
 
     let msg_width = (message.len() as u16 + 4).min(area.width.saturating_sub(4)).max(20);
@@ -1263,5 +1288,156 @@ fn render_recording_result(frame: &mut Frame, area: Rect, result: &Result<String
     .block(block)
     .alignment(Alignment::Center);
 
+    frame.render_widget(paragraph, popup_area);
+}
+
+/// Render preset selection popup
+fn render_preset_popup(frame: &mut Frame, area: Rect, popup: &PresetPopup, theme: &crate::theme::Theme) {
+    let highlight_color = theme.highlight_color;
+    let text_color = theme.text_color;
+
+    let popup_width = 30.min(area.width.saturating_sub(4));
+    let popup_height = (popup.names.len() as u16 + 2).min(area.height.saturating_sub(4)).max(3);
+
+    let popup_x = area.x + (area.width.saturating_sub(popup_width)) / 2;
+    let popup_y = area.y + (area.height.saturating_sub(popup_height)) / 2;
+
+    let popup_area = Rect {
+        x: popup_x,
+        y: popup_y,
+        width: popup_width,
+        height: popup_height,
+    };
+
+    frame.render_widget(Clear, popup_area);
+
+    let content: Vec<Line> = popup.names
+        .iter()
+        .enumerate()
+        .map(|(idx, name)| {
+            let is_selected = idx == popup.selected_idx;
+            let prefix = if is_selected { "> " } else { "  " };
+            let style = if is_selected {
+                Style::default().fg(highlight_color).add_modifier(Modifier::BOLD)
+            } else {
+                Style::default().fg(text_color)
+            };
+            Line::from(Span::styled(format!("{}{}", prefix, name), style))
+        })
+        .collect();
+
+    // Calculate scroll to keep selection visible
+    let visible_height = popup_height.saturating_sub(2);
+    let selected = popup.selected_idx as u16;
+    let scroll = if visible_height == 0 || selected < visible_height {
+        0
+    } else {
+        selected.saturating_sub(visible_height - 1)
+    };
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double)
+        .border_style(Style::default().fg(highlight_color))
+        .title(" Load Preset (Enter/Esc) ");
+
+    let paragraph = Paragraph::new(content)
+        .block(block)
+        .alignment(Alignment::Left)
+        .scroll((scroll, 0));
+
+    frame.render_widget(paragraph, popup_area);
+}
+
+/// Render preset result toast (success or error message)
+fn render_preset_result(frame: &mut Frame, area: Rect, result: &Result<String, String>, theme: &crate::theme::Theme) {
+    let (message, color) = match result {
+        Ok(msg) => (msg.clone(), theme.success_color),
+        Err(e) => (format!("Error: {}", e), theme.error_color),
+    };
+
+    let msg_width = (message.len() as u16 + 4).min(area.width.saturating_sub(4)).max(20);
+    let popup_x = area.x + (area.width.saturating_sub(msg_width)) / 2;
+    let popup_y = area.y + area.height.saturating_sub(5);
+
+    let popup_area = Rect {
+        x: popup_x,
+        y: popup_y,
+        width: msg_width,
+        height: 3,
+    };
+
+    frame.render_widget(Clear, popup_area);
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(color));
+
+    let paragraph = Paragraph::new(Line::from(Span::styled(
+        message,
+        Style::default().fg(color),
+    )))
+    .block(block)
+    .alignment(Alignment::Center);
+
+    frame.render_widget(paragraph, popup_area);
+}
+
+/// Render preset save popup (text input for preset name)
+fn render_preset_save_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup, theme: &crate::theme::Theme) {
+    let highlight_color = theme.highlight_color;
+    let text_color = theme.text_color;
+
+    let popup_width = 40.min(area.width.saturating_sub(4));
+    let popup_height = 5;
+
+    let popup_x = area.x + (area.width.saturating_sub(popup_width)) / 2;
+    let popup_y = area.y + (area.height.saturating_sub(popup_height)) / 2;
+
+    let popup_area = Rect {
+        x: popup_x,
+        y: popup_y,
+        width: popup_width,
+        height: popup_height,
+    };
+
+    frame.render_widget(Clear, popup_area);
+
+    // Build input display with cursor
+    let input_display = if popup.cursor_pos < popup.input.len() {
+        let before = &popup.input[..popup.cursor_pos];
+        let cursor_char = popup.input.chars().nth(popup.cursor_pos).unwrap_or(' ');
+        let after = &popup.input[popup.cursor_pos + cursor_char.len_utf8()..];
+        vec![
+            Span::styled(before, Style::default().fg(text_color)),
+            Span::styled(
+                cursor_char.to_string(),
+                Style::default().fg(text_color).add_modifier(Modifier::REVERSED),
+            ),
+            Span::styled(after, Style::default().fg(text_color)),
+        ]
+    } else {
+        vec![
+            Span::styled(&popup.input, Style::default().fg(text_color)),
+            Span::styled(" ", Style::default().add_modifier(Modifier::REVERSED)),
+        ]
+    };
+
+    let content = vec![
+        Line::from(vec![Span::styled(
+            "Enter preset name:",
+            Style::default().fg(theme.dim_text_color),
+        )]),
+        Line::from(input_display),
+    ];
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double)
+        .border_style(Style::default().fg(highlight_color))
+        .title(popup.title);
+
+    let paragraph = Paragraph::new(content).block(block);
     frame.render_widget(paragraph, popup_area);
 }

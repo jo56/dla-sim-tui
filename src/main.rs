@@ -460,6 +460,48 @@ fn run_app<B: ratatui::backend::Backend>(
                         continue;
                     }
 
+                    // === Handle preset popup keys (if preset popup is open) ===
+                    if app.preset_popup.is_some() {
+                        match key.code {
+                            KeyCode::Up => app.preset_popup_nav_up(),
+                            KeyCode::Down => app.preset_popup_nav_down(),
+                            KeyCode::Enter => app.load_selected_preset(),
+                            KeyCode::Esc => app.close_preset_popup(),
+                            _ => {}
+                        }
+                        continue;
+                    }
+
+                    // === Handle preset save popup keys (if save popup is open) ===
+                    if app.preset_save_popup.is_some() {
+                        match key.code {
+                            KeyCode::Enter => app.confirm_preset_save(),
+                            KeyCode::Esc => app.close_preset_save_popup(),
+                            KeyCode::Backspace => {
+                                if let Some(popup) = &mut app.preset_save_popup {
+                                    popup.delete_char();
+                                }
+                            }
+                            KeyCode::Left => {
+                                if let Some(popup) = &mut app.preset_save_popup {
+                                    popup.move_cursor_left();
+                                }
+                            }
+                            KeyCode::Right => {
+                                if let Some(popup) = &mut app.preset_save_popup {
+                                    popup.move_cursor_right();
+                                }
+                            }
+                            KeyCode::Char(c) => {
+                                if let Some(popup) = &mut app.preset_save_popup {
+                                    popup.insert_char(c);
+                                }
+                            }
+                            _ => {}
+                        }
+                        continue;
+                    }
+
                     // Clear export result on any key press
                     if app.export_result.is_some() {
                         app.clear_export_result();
@@ -468,6 +510,11 @@ fn run_app<B: ratatui::backend::Backend>(
                     // Clear recording result on any key press
                     if app.recording_result.is_some() {
                         app.clear_recording_result();
+                    }
+
+                    // Clear preset result on any key press
+                    if app.preset_result.is_some() {
+                        app.clear_preset_result();
                     }
 
                     // === Handle Shift+letter to open popup ===
@@ -481,6 +528,16 @@ fn run_app<B: ratatui::backend::Backend>(
                             // Shift+X opens export popup
                             if c == 'X' || c == 'x' {
                                 app.open_export_popup();
+                                continue;
+                            }
+                            // Shift+L opens preset load popup
+                            if c == 'L' || c == 'l' {
+                                app.open_preset_popup();
+                                continue;
+                            }
+                            // Shift+K opens preset save popup
+                            if c == 'K' || c == 'k' {
+                                app.open_preset_save_popup();
                                 continue;
                             }
                             // Shift+W directly adjusts walk step (since w is now navigation)
