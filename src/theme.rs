@@ -111,10 +111,10 @@ impl ThemeId {
                 name: "Default",
                 color_scheme: ColorScheme::Grayscale,  // Works on any terminal
                 border_color: Color::Rgb(128, 128, 128),   // Neutral gray
-                highlight_color: Color::Rgb(0, 206, 209),  // Cyan accent #00CED1
+                highlight_color: Color::Rgb(218, 165, 32), // Goldenrod accent #DAA520
                 text_color: Color::Rgb(224, 224, 224),     // Light gray #E0E0E0
                 dim_text_color: Color::Rgb(128, 128, 128), // Medium gray
-                particle_color: Color::Rgb(0, 206, 209),   // Cyan accent
+                particle_color: Color::Rgb(218, 165, 32),  // Goldenrod accent
                 background: BackgroundMode::Transparent,   // Use terminal's background
                 error_color: Color::Rgb(224, 96, 96),      // Muted red #E06060
                 success_color: Color::Rgb(96, 224, 96),    // Muted green #60E060

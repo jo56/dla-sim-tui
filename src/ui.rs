@@ -15,8 +15,8 @@ const STATES_PANEL_WIDTH: u16 = 48;
 /// Max scroll for help content (generous to account for text wrapping on small screens)
 pub const HELP_CONTENT_LINES: u16 = 73;
 
-/// Number of lines in controls content (9 main + 10 non-shift + 18 Shift+letter hints)
-pub const CONTROLS_CONTENT_LINES: u16 = 37;
+/// Number of lines in controls content (9 main + 10 non-shift + 11 Shift+letter hints)
+pub const CONTROLS_CONTENT_LINES: u16 = 30;
 
 /// Number of lines in parameters content
 pub const PARAMS_CONTENT_LINES: u16 = 24;
@@ -574,16 +574,6 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         // Shift+letter hotkeys
         Line::from(vec![
             Span::raw(" "),
-            Span::styled("Shift+B:", key_style),
-            Span::styled(" bound", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("Shift+C:", key_style),
-            Span::styled(" color", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
             Span::styled("Shift+D:", key_style),
             Span::styled(" direction", desc_style),
         ]),
@@ -604,16 +594,6 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         ]),
         Line::from(vec![
             Span::raw(" "),
-            Span::styled("Shift+H:", key_style),
-            Span::styled(" highlight", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("Shift+I:", key_style),
-            Span::styled(" invert", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
             Span::styled("Shift+K:", key_style),
             Span::styled(" save preset", desc_style),
         ]),
@@ -624,23 +604,8 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         ]),
         Line::from(vec![
             Span::raw(" "),
-            Span::styled("Shift+M:", key_style),
-            Span::styled(" 4 options", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("Shift+N:", key_style),
-            Span::styled(" neighbors", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
             Span::styled("Shift+O:", key_style),
             Span::styled(" offset", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("Shift+P:", key_style),
-            Span::styled(" particles", desc_style),
         ]),
         Line::from(vec![
             Span::raw(" "),

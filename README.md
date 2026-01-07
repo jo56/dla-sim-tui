@@ -350,7 +350,7 @@ Control how the simulation is displayed.
 
 | Theme | Description | CLI Name |
 |-------|-------------|----------|
-| **Default** | Grayscale + cyan, transparent background | `default` |
+| **Default** | Grayscale + gold, transparent background | `default` |
 | **Lagoon** | Teal/gold coastal theme | `lagoon` |
 | **Bluemono** | Light theme, black/blue on white | `bluemono` |
 | **Violet** | Purple/pink gradient | `violet` |
