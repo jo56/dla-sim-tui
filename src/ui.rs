@@ -15,8 +15,8 @@ const STATES_PANEL_WIDTH: u16 = 48;
 /// Max scroll for help content (generous to account for text wrapping on small screens)
 pub const HELP_CONTENT_LINES: u16 = 73;
 
-/// Number of lines in controls content (7 main + 18 Shift+letter hints + 1 record + 2 presets)
-pub const CONTROLS_CONTENT_LINES: u16 = 29;
+/// Number of lines in controls content (9 main + 3 non-shift + 18 Shift+letter hints)
+pub const CONTROLS_CONTENT_LINES: u16 = 30;
 
 /// Number of lines in parameters content
 pub const PARAMS_CONTENT_LINES: u16 = 24;
@@ -491,7 +491,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         ]),
         Line::from(vec![
             Span::raw(" "),
-            Span::styled("w/s/↑↓", key_style),
+            Span::styled("W/S/↑↓", key_style),
             Span::styled(" navigate", desc_style),
         ]),
         Line::from(vec![
@@ -504,6 +504,23 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::styled("+/-", key_style),
             Span::styled(" speed", desc_style),
         ]),
+        // Non-shift letter hotkeys
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("A", key_style),
+            Span::styled(" age", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("L", key_style),
+            Span::styled(" brightness", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("`", key_style),
+            Span::styled(" record", desc_style),
+        ]),
+        // Shift+key hotkeys
         Line::from(vec![
             Span::raw(" "),
             Span::styled("Shift+?:", key_style),
@@ -519,12 +536,7 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::styled("Shift+X:", key_style),
             Span::styled(" export", desc_style),
         ]),
-        // Letter hotkeys
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("A", key_style),
-            Span::styled(" age", desc_style),
-        ]),
+        // Shift+letter hotkeys
         Line::from(vec![
             Span::raw(" "),
             Span::styled("Shift+B:", key_style),
@@ -567,6 +579,16 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
         ]),
         Line::from(vec![
             Span::raw(" "),
+            Span::styled("Shift+K:", key_style),
+            Span::styled(" save preset", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
+            Span::styled("Shift+L:", key_style),
+            Span::styled(" load preset", desc_style),
+        ]),
+        Line::from(vec![
+            Span::raw(" "),
             Span::styled("Shift+M:", key_style),
             Span::styled(" 4 options", desc_style),
         ]),
@@ -604,21 +626,6 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::raw(" "),
             Span::styled("Shift+W:", key_style),
             Span::styled(" walk", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("`:", key_style),
-            Span::styled(" record", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("Shift+L:", key_style),
-            Span::styled(" load preset", desc_style),
-        ]),
-        Line::from(vec![
-            Span::raw(" "),
-            Span::styled("Shift+K:", key_style),
-            Span::styled(" save preset", desc_style),
         ]),
     ];
 
