@@ -3,6 +3,7 @@ use crate::color::{ColorLut, ColorScheme};
 use crate::config::AppConfig;
 use crate::recorder::Recorder;
 use crate::simulation::{DlaSimulation, SeedPattern};
+use crate::theme::{Theme, ThemeId};
 use std::path::Path;
 
 /// Popup menu state for Shift+letter parameter selection
@@ -264,12 +265,17 @@ pub struct App {
     pub recording_result: Option<Result<String, String>>,
     /// Tracks if simulation was paused before opening recording popup
     pub recording_was_paused: bool,
+    // Theme state
+    pub theme_id: ThemeId,
+    pub theme: Theme,
 }
 
 impl App {
     pub fn new(canvas_width: u16, canvas_height: u16) -> Self {
         let (sim_width, sim_height) = braille::calculate_simulation_size(canvas_width, canvas_height);
-        let color_scheme = ColorScheme::default();
+        let theme_id = ThemeId::default();
+        let theme = theme_id.theme();
+        let color_scheme = theme.color_scheme;
         Self {
             simulation: DlaSimulation::new(sim_width, sim_height),
             color_lut: color_scheme.build_lut(),
@@ -288,6 +294,8 @@ impl App {
             recording_popup: None,
             recording_result: None,
             recording_was_paused: false,
+            theme_id,
+            theme,
         }
     }
 
@@ -716,6 +724,7 @@ impl App {
             color_scheme: self.color_scheme,
             steps_per_frame: self.steps_per_frame,
             color_by_age: self.color_by_age,
+            theme: self.theme_id,
         }
     }
 
@@ -725,10 +734,10 @@ impl App {
         self.simulation.seed_pattern = config.seed_pattern;
         self.simulation.stickiness = config.stickiness;
         self.simulation.num_particles = config.num_particles;
-        self.color_scheme = config.color_scheme;
-        self.color_lut = self.color_scheme.build_lut();
         self.steps_per_frame = config.steps_per_frame;
         self.color_by_age = config.color_by_age;
+        // Apply theme (which sets color_scheme and rebuilds LUT)
+        self.set_theme(config.theme);
     }
 
     // === Recording methods ===
@@ -795,5 +804,32 @@ impl App {
     /// Clear recording result (call after displaying it)
     pub fn clear_recording_result(&mut self) {
         self.recording_result = None;
+    }
+
+    // === Theme methods ===
+
+    /// Cycle to the next theme
+    pub fn cycle_theme_next(&mut self) {
+        self.theme_id = self.theme_id.next();
+        self.apply_theme();
+    }
+
+    /// Cycle to the previous theme
+    pub fn cycle_theme_prev(&mut self) {
+        self.theme_id = self.theme_id.prev();
+        self.apply_theme();
+    }
+
+    /// Set a specific theme by ID
+    pub fn set_theme(&mut self, theme_id: ThemeId) {
+        self.theme_id = theme_id;
+        self.apply_theme();
+    }
+
+    /// Apply the current theme_id to update theme and color settings
+    fn apply_theme(&mut self) {
+        self.theme = self.theme_id.theme();
+        self.color_scheme = self.theme.color_scheme;
+        self.color_lut = self.color_scheme.build_lut();
     }
 }

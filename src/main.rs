@@ -6,6 +6,7 @@ mod presets;
 mod recorder;
 mod settings;
 mod simulation;
+mod theme;
 mod ui;
 
 use app::{App, Focus, ViewMode};
@@ -126,6 +127,10 @@ struct Args {
     /// Invert color gradient
     #[arg(long, default_value = "false")]
     invert: bool,
+
+    /// Color theme (default, rose-pine, rose-pine-moon, dracula, gruvbox, tokyo-night, catppuccin, nord, deep-space, sunset, matrix, amber)
+    #[arg(long, default_value = "default")]
+    theme: String,
 }
 
 fn parse_neighborhood(s: &str) -> NeighborhoodType {
@@ -295,6 +300,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     if is_explicit("invert") || use_default_args {
         app.simulation.settings.invert_colors = args.invert;
+    }
+    if is_explicit("theme") || use_default_args {
+        app.set_theme(theme::parse_theme(&args.theme));
     }
 
     // Determine seed pattern - CLI overrides config
@@ -551,6 +559,12 @@ fn run_app<B: ratatui::backend::Backend>(
                         KeyCode::Char('c') | KeyCode::Char('C') => {
                             app.cycle_color_scheme();
                             app.focus = Focus::ColorScheme;
+                        }
+                        KeyCode::Char('t') => {
+                            app.cycle_theme_next();
+                        }
+                        KeyCode::Char('T') => {
+                            app.cycle_theme_prev();
                         }
                         KeyCode::Char('a') | KeyCode::Char('A') => app.toggle_color_by_age(),
                         KeyCode::Char('m') | KeyCode::Char('M') => {
