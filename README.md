@@ -71,11 +71,12 @@ cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 1
 
 ### Command Line Options
 
-#### Config File
+#### Config & Presets
 
 | Option | Description |
 |--------|-------------|
 | `--config <FILE>` | Load settings from a JSON config file. CLI args override config values. |
+| `--preset <NAME>` | Load a preset by name (built-in or user-created). CLI args override preset values. |
 
 #### Simulation Mode
 
@@ -129,11 +130,17 @@ cargo run --release -- --particles 3000 --stickiness 0.5 --seed circle --speed 1
 | `--color-mode` | Color property (age, distance, density, direction) | age |
 | `--highlight` | Recent particles to highlight (0-50) | 0 |
 | `--invert` | Invert color gradient | false |
-| `--theme` | Color theme (see Themes section below) | default |
+| `-t, --theme` | Color theme (see Themes section below) | default |
 
 ### Examples
 
 ```bash
+# Load a built-in preset
+dla-sim-tui --preset Dendritic
+
+# Load a preset and override some settings
+dla-sim-tui --preset Coral --particles 8000 -t matrix
+
 # Classic DLA with higher stickiness at tips (creates bushier growth)
 dla-sim-tui --tip-stickiness 1.0 --side-stickiness 0.3
 

@@ -137,7 +137,7 @@ impl ThemeId {
                 border_color: Color::Rgb(0, 0, 0),          // Black borders
                 highlight_color: Color::Rgb(50, 50, 50),    // Dark gray for highlights (visible)
                 text_color: Color::Rgb(0, 0, 0),            // Black text
-                dim_text_color: Color::Rgb(80, 80, 80),     // Dark gray labels (visible)
+                dim_text_color: Color::Rgb(0, 0, 0),        // Black labels (consistent)
                 particle_color: Color::Rgb(30, 85, 130),    // Deep blue for contrast
                 background: BackgroundMode::Solid(252, 246, 248),  // #FCF6F8 soft white
                 error_color: Color::Rgb(180, 60, 60),       // Darker red for light bg

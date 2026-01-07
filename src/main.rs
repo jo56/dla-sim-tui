@@ -31,6 +31,10 @@ struct Args {
     #[arg(long, value_name = "FILE")]
     config: Option<String>,
 
+    /// Load a preset by name (built-in or user-created)
+    #[arg(long, value_name = "NAME")]
+    preset: Option<String>,
+
     /// Use classic DLA defaults (unit lattice steps, 4-neighbor, absorb boundary)
     #[arg(long)]
     classic: bool,
@@ -129,7 +133,7 @@ struct Args {
     invert: bool,
 
     /// Color theme (default, rose-pine, rose-pine-moon, dracula, gruvbox, tokyo-night, catppuccin, nord, deep-space, sunset, matrix, amber)
-    #[arg(long, default_value = "default")]
+    #[arg(short = 't', long, default_value = "default")]
     theme: String,
 }
 
@@ -221,6 +225,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Apply config file settings first (if loaded)
     if let Some(cfg) = &base_config {
         app.apply_config(cfg);
+    }
+
+    // Apply preset if specified (after config, before CLI args)
+    if let Some(preset_name) = &args.preset {
+        if let Some(preset) = app.preset_manager.find(preset_name) {
+            app.simulation.settings = preset.settings.clone();
+            app.simulation.stickiness = preset.base_stickiness;
+            app.simulation.num_particles = preset.num_particles;
+            app.simulation.seed_pattern = preset.seed_pattern;
+        } else {
+            eprintln!("Warning: Preset '{}' not found. Available presets:", preset_name);
+            for name in app.preset_manager.preset_names() {
+                eprintln!("  - {}", name);
+            }
+        }
     }
 
     // Apply CLI args - only if explicitly provided (override config) or no config loaded

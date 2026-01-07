@@ -519,10 +519,10 @@ fn render_controls_box(frame: &mut Frame, area: Rect, app: &App) {
             Span::styled("Shift+X:", key_style),
             Span::styled(" export", desc_style),
         ]),
-        // Shift+letter hints (alphabetical)
+        // Letter hotkeys
         Line::from(vec![
             Span::raw(" "),
-            Span::styled("Shift+A:", key_style),
+            Span::styled("A", key_style),
             Span::styled(" age", desc_style),
         ]),
         Line::from(vec![

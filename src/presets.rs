@@ -278,6 +278,7 @@ impl PresetManager {
     }
 
     /// Delete a user preset
+    #[allow(dead_code)]
     pub fn delete_preset(&mut self, name: &str) -> Result<(), String> {
         let dir = Self::presets_dir().ok_or("Could not determine config directory")?;
 
