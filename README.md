@@ -251,6 +251,7 @@ If you request `.mp4` or `.webm` but FFmpeg isn't installed, the recording will 
 | `M` | Cycle color mode |
 | `N` | Cycle neighborhood type |
 | `B` | Cycle boundary behavior |
+| `P` | Focus particles parameter |
 | `Shift+S` | Open spawn mode popup |
 | `Shift+W` | Increase walk step size |
 | `Shift+E` | Decrease walk step size |

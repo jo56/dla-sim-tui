@@ -864,7 +864,7 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
         settings.color_mode,
         settings.highlight_recent,
         settings.invert_colors,
-        theme.text_color,
+        theme.particle_color,
         theme.highlight_color,
     );
 
