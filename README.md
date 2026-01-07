@@ -428,7 +428,17 @@ Presets allow you to quickly save and load simulation configurations.
 | Gradient | Dense core with sparse edges |
 | Rain | Particles fall from top edge |
 
-User-created presets are saved to `~/.config/dla-sim-tui/presets/` (or equivalent Windows location).
+#### Preset File Location
+
+User-created presets are saved as individual JSON files. You can manually add, edit, or delete preset files:
+
+| Platform | Location |
+|----------|----------|
+| Linux | `~/.config/dla-sim-tui/presets/` |
+| macOS | `~/Library/Application Support/dla-sim-tui/presets/` |
+| Windows | `C:\Users\<username>\AppData\Roaming\dla-sim-tui\presets\` |
+
+Each preset is a standalone `.json` file that can be shared or backed up.
 
 ## Dependencies
 
