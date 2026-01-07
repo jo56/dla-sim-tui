@@ -298,7 +298,7 @@ impl Default for SimulationSettings {
             color_mode: ColorMode::default(),
             highlight_recent: 0,
             invert_colors: false,
-            min_brightness: 0.0,
+            min_brightness: 0.15,
         }
     }
 }

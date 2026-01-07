@@ -225,10 +225,7 @@ If you request `.mp4` or `.webm` but FFmpeg isn't installed, the recording will 
 | `j/k` | Adjust focused value |
 | `Esc` | Close help / exit focus |
 | `V` | Cycle view mode (Default/States/Fullscreen) |
-| `` ` `` | Start/stop recording |
 | `Shift+X` | Export config to file |
-| `Shift+L` | Load preset |
-| `Shift+K` | Save preset |
 | `H` | Show help (Up/Down to scroll) |
 | `Q` | Quit |
 
@@ -239,6 +236,15 @@ If you request `.mp4` or `.webm` but FFmpeg isn't installed, the recording will 
 | `1-0` | Quick select seed pattern (1=Point through 0=Scatter) |
 | `+/-` | Adjust simulation speed |
 | `[/]` | Adjust highlight count |
+| `A` | Toggle color-by-age |
+| `L` | Cycle min brightness (0%/15%/30%/45%) |
+| `` ` `` | Start/stop recording |
+| `Shift+L` | Load preset |
+| `Shift+K` | Save preset |
+| `Shift+S` | Open spawn mode popup |
+| `Shift+W` | Increase walk step size |
+| `Shift+E` | Decrease walk step size |
+| `Shift+T` | Cycle theme (previous) |
 
 ### Parameter Popup
 
@@ -254,17 +260,12 @@ If you request `.mp4` or `.webm` but FFmpeg isn't installed, the recording will 
 
 | Key | Action |
 |-----|--------|
-| `A` | Toggle color-by-age |
 | `C` | Cycle color scheme |
 | `T` | Cycle theme (next) |
-| `Shift+T` | Cycle theme (previous) |
 | `M` | Cycle color mode |
 | `N` | Cycle neighborhood type |
 | `B` | Cycle boundary behavior |
 | `P` | Focus particles parameter |
-| `Shift+S` | Open spawn mode popup |
-| `Shift+W` | Increase walk step size |
-| `Shift+E` | Decrease walk step size |
 | `I` | Invert colors |
 
 ### View Modes
