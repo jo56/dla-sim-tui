@@ -1,5 +1,14 @@
 # DLA Sim TUI
 
+  <div align="center">
+          <img src="assets/sunset-preview-2.png" alt="sunset theme preview">
+      <br>
+          <i>Example run with sunset theme</i>
+    <br>
+  </div>
+
+<br>
+
 A terminal-based Diffusion-Limited Aggregation (DLA) simulation using high-resolution Braille character rendering.
 
 ![Rust](https://img.shields.io/badge/rust-stable-orange)
