@@ -1,9 +1,7 @@
 # DLA Sim TUI
 
   <div align="center">
-          <img src="assets/sunset-preview-2.png" alt="sunset theme preview">
-      <br>
-          <i>Example run with sunset theme</i>
+          <img src="assets/frost-preview-4.png" alt="frost theme preview">
     <br>
   </div>
 
