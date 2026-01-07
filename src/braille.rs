@@ -43,6 +43,7 @@ pub fn render_to_braille(
     color_mode: ColorMode,
     highlight_recent: usize,
     invert_colors: bool,
+    min_brightness: f32,
     fallback_color: Color,
     highlight_color: Color,
 ) -> Vec<BrailleCell> {
@@ -116,7 +117,9 @@ pub fn render_to_braille(
                     highlight_color
                 } else if color_by_age && dot_count > 0 {
                     let avg_value = total_value / dot_count as f32;
-                    let t = if invert_colors { 1.0 - avg_value } else { avg_value };
+                    let base_t = if invert_colors { 1.0 - avg_value } else { avg_value };
+                    // Apply min_brightness floor: remap [0,1] to [min_brightness, 1]
+                    let t = min_brightness + base_t * (1.0 - min_brightness);
                     map_from_lut(color_lut, t)
                 } else {
                     fallback_color

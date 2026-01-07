@@ -512,6 +512,11 @@ impl App {
         self.simulation.settings.invert_colors = !self.simulation.settings.invert_colors;
     }
 
+    /// Cycle through min brightness presets
+    pub fn cycle_min_brightness(&mut self) {
+        self.simulation.settings.cycle_min_brightness();
+    }
+
     /// Cycle through neighborhood types
     pub fn cycle_neighborhood(&mut self) {
         self.simulation.settings.neighborhood = self.simulation.settings.neighborhood.next();

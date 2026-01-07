@@ -277,30 +277,6 @@ impl PresetManager {
         Ok(())
     }
 
-    /// Delete a user preset
-    #[allow(dead_code)]
-    pub fn delete_preset(&mut self, name: &str) -> Result<(), String> {
-        let dir = Self::presets_dir().ok_or("Could not determine config directory")?;
-
-        // Find and remove from user list
-        if let Some(pos) = self.user.iter().position(|p| p.name == name) {
-            self.user.remove(pos);
-        }
-
-        // Sanitize filename and delete file
-        let filename = name
-            .chars()
-            .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
-            .collect::<String>();
-
-        let path = dir.join(format!("{}.json", filename));
-        if path.exists() {
-            fs::remove_file(&path).map_err(|e| format!("Failed to delete preset file: {}", e))?;
-        }
-
-        Ok(())
-    }
-
     /// Get all presets (builtin + user)
     pub fn all_presets(&self) -> impl Iterator<Item = &Preset> {
         self.builtin.iter().chain(self.user.iter())

@@ -263,6 +263,8 @@ pub struct SimulationSettings {
     pub highlight_recent: usize,
     /// Invert color gradient
     pub invert_colors: bool,
+    /// Minimum brightness floor for color gradient (0.0-0.5)
+    pub min_brightness: f32,
 }
 
 impl Default for SimulationSettings {
@@ -296,6 +298,7 @@ impl Default for SimulationSettings {
             color_mode: ColorMode::default(),
             highlight_recent: 0,
             invert_colors: false,
+            min_brightness: 0.0,
         }
     }
 }
@@ -380,6 +383,18 @@ impl SimulationSettings {
     /// Toggle lattice walk on/off
     pub fn toggle_lattice_walk(&mut self) {
         self.lattice_walk = !self.lattice_walk;
+    }
+
+    /// Cycle min brightness through preset values
+    pub fn cycle_min_brightness(&mut self) {
+        const PRESETS: [f32; 4] = [0.0, 0.15, 0.30, 0.45];
+        // Find current preset index (with small epsilon for float comparison)
+        let current_idx = PRESETS
+            .iter()
+            .position(|&p| (p - self.min_brightness).abs() < 0.01)
+            .unwrap_or(0);
+        let next_idx = (current_idx + 1) % PRESETS.len();
+        self.min_brightness = PRESETS[next_idx];
     }
 
     /// Calculate effective stickiness based on neighbor count and distance

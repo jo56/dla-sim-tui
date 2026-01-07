@@ -651,6 +651,9 @@ fn run_app<B: ratatui::backend::Backend>(
                             app.toggle_invert_colors();
                             app.focus = Focus::Invert;
                         }
+                        KeyCode::Char('l') | KeyCode::Char('L') => {
+                            app.cycle_min_brightness();
+                        }
                         KeyCode::Char('n') | KeyCode::Char('N') => {
                             app.cycle_neighborhood();
                             app.focus = Focus::Neighborhood;

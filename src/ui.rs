@@ -889,6 +889,7 @@ fn render_canvas(frame: &mut Frame, area: Rect, app: &App) {
         settings.color_mode,
         settings.highlight_recent,
         settings.invert_colors,
+        settings.min_brightness,
         theme.particle_color,
         theme.highlight_color,
     );
@@ -985,6 +986,7 @@ fn render_help_overlay(frame: &mut Frame, area: Rect, app: &App) {
         Line::from(Span::styled("Shift+S - Spawn popup", Style::default().fg(text_color))),
         Line::from(Span::styled("Shift+W/E - Walk step +/-", Style::default().fg(text_color))),
         Line::from(Span::styled("I - Invert colors", Style::default().fg(text_color))),
+        Line::from(Span::styled("L - Cycle min brightness", Style::default().fg(text_color))),
         Line::from(""),
         Line::from(Span::styled("MOVEMENT PARAMETERS:", Style::default().fg(highlight_color))),
         Line::from(""),
