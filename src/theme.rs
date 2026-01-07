@@ -126,9 +126,9 @@ impl ThemeId {
                 name: "Bluemono",
                 color_scheme: ColorScheme::Ocean,  // Blue monochrome gradient
                 border_color: Color::Rgb(0, 0, 0),  // Black borders
-                highlight_color: Color::Rgb(0, 0, 0),  // Black highlights (same as border)
+                highlight_color: Color::Rgb(0, 0, 0),  // Black highlights
                 text_color: Color::Rgb(0, 0, 0),  // Black text
-                dim_text_color: Color::Rgb(91, 127, 166),  // #5B7FA6 soft blue for labels
+                dim_text_color: Color::Rgb(0, 0, 0),  // Black labels
                 background: BackgroundMode::Solid(252, 246, 248),  // #FCF6F8 soft white
             },
             ThemeId::Violet => Theme {
