@@ -11,32 +11,6 @@
 
 A terminal-based Diffusion-Limited Aggregation (DLA) simulation using high-resolution Braille character rendering.
 
-![Rust](https://img.shields.io/badge/rust-stable-orange)
-
-## What is DLA?
-
-Diffusion-Limited Aggregation is a process where particles undergo random walks and stick to a growing structure upon contact. This creates beautiful fractal patterns similar to:
-- Snowflake formation
-- Lightning branching
-- Mineral dendrites
-- Coral growth
-- River delta patterns
-
-## Features
-
-- **High-resolution Braille rendering** - Each terminal character displays a 2x4 dot pattern
-- **Real-time simulation** - Watch the fractal structure grow
-- **27 adjustable parameters** - Fine-tune movement, sticking behavior, spawning, and visuals
-- **Classic mode** - Use `--classic` for canonical Witten-Sander DLA (4-neighbor, unit steps)
-- **Multiple seed patterns** - Points, lines, rings, blocks, spokes, scatter/noise blobs and more
-- **12 color themes** - Lagoon, Violet, Harvest, Midnight, Frost, and more
-- **16 color gradients** - Theme-matched gradients plus classic options (Ice, Fire, Plasma, etc.)
-- **12 built-in presets** - Quick-select preset configurations for different growth patterns
-- **Parameter popup** - Quick access to any parameter via Shift+letter
-- **Three view modes** - Default (sidebar + canvas), States (all params visible), Fullscreen (canvas only)
-- **Config export/import** - Save and load settings as JSON files
-- **Video recording** - Capture simulations as MP4, WebM, or GIF files
-
 ## Installation
 
 ### From GitHub (recommended)
