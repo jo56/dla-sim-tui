@@ -134,10 +134,10 @@ impl ThemeId {
             ThemeId::Bluemono => Theme {
                 name: "Bluemono",
                 color_scheme: ColorScheme::Ocean,  // Blue monochrome gradient
-                border_color: Color::Rgb(60, 60, 80),       // Dark blue-gray borders
-                highlight_color: Color::Rgb(0, 100, 180),   // Ocean blue for highlights
-                text_color: Color::Rgb(30, 30, 40),         // Near-black text
-                dim_text_color: Color::Rgb(120, 120, 140),  // Medium gray labels
+                border_color: Color::Rgb(0, 0, 0),          // Black borders
+                highlight_color: Color::Rgb(50, 50, 50),    // Dark gray for highlights (visible)
+                text_color: Color::Rgb(0, 0, 0),            // Black text
+                dim_text_color: Color::Rgb(80, 80, 80),     // Dark gray labels (visible)
                 particle_color: Color::Rgb(30, 85, 130),    // Deep blue for contrast
                 background: BackgroundMode::Solid(252, 246, 248),  // #FCF6F8 soft white
                 error_color: Color::Rgb(180, 60, 60),       // Darker red for light bg
