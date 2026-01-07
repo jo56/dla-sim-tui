@@ -357,7 +357,7 @@ Control how the simulation is displayed.
 |-------|-------------|----------|
 | **Default** | Cyan/yellow on dark gray | `default` |
 | **Lagoon** | Teal/gold coastal theme | `lagoon` |
-| **Cove** | Cooler teal variant | `cove` |
+| **Bluemono** | Light theme, black/blue on white | `bluemono` |
 | **Violet** | Purple/pink gradient | `violet` |
 | **Harvest** | Earthy orange/yellow | `harvest` |
 | **Midnight** | Deep blue night sky | `midnight` |

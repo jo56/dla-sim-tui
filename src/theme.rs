@@ -44,7 +44,7 @@ pub enum ThemeId {
     Default,
     // Descriptive theme names
     Lagoon,
-    Cove,
+    Bluemono,
     Violet,
     Harvest,
     Midnight,
@@ -62,7 +62,7 @@ impl ThemeId {
     const ALL: [ThemeId; 12] = [
         ThemeId::Default,
         ThemeId::Lagoon,
-        ThemeId::Cove,
+        ThemeId::Bluemono,
         ThemeId::Violet,
         ThemeId::Harvest,
         ThemeId::Midnight,
@@ -88,7 +88,7 @@ impl ThemeId {
         match self {
             ThemeId::Default => "Default",
             ThemeId::Lagoon => "Lagoon",
-            ThemeId::Cove => "Cove",
+            ThemeId::Bluemono => "Bluemono",
             ThemeId::Violet => "Violet",
             ThemeId::Harvest => "Harvest",
             ThemeId::Midnight => "Midnight",
@@ -122,14 +122,14 @@ impl ThemeId {
                 dim_text_color: Color::Rgb(144, 140, 170),  // #908CAA
                 background: BackgroundMode::Solid(25, 23, 36),  // #191724
             },
-            ThemeId::Cove => Theme {
-                name: "Cove",
-                color_scheme: ColorScheme::Lagoon,  // Shares gradient with Lagoon
-                border_color: Color::Rgb(62, 143, 176),  // #3E8FB0 cooler teal
-                highlight_color: Color::Rgb(246, 193, 119),  // #F6C177 gold
-                text_color: Color::Rgb(224, 222, 244),  // #E0DEF4
-                dim_text_color: Color::Rgb(129, 124, 156),  // #817C9C
-                background: BackgroundMode::Solid(35, 33, 54),  // #232136
+            ThemeId::Bluemono => Theme {
+                name: "Bluemono",
+                color_scheme: ColorScheme::Ocean,  // Blue monochrome gradient
+                border_color: Color::Rgb(0, 0, 0),  // Black borders
+                highlight_color: Color::Rgb(91, 127, 166),  // #5B7FA6 soft blue
+                text_color: Color::Rgb(0, 0, 0),  // Black text
+                dim_text_color: Color::Rgb(91, 127, 166),  // #5B7FA6 soft blue
+                background: BackgroundMode::Solid(252, 246, 248),  // #FCF6F8 soft white
             },
             ThemeId::Violet => Theme {
                 name: "Violet",
@@ -221,7 +221,7 @@ pub fn parse_theme(s: &str) -> ThemeId {
     match s.to_lowercase().replace(['-', '_', ' '], "").as_str() {
         "default" => ThemeId::Default,
         "lagoon" => ThemeId::Lagoon,
-        "cove" => ThemeId::Cove,
+        "bluemono" => ThemeId::Bluemono,
         "violet" => ThemeId::Violet,
         "harvest" => ThemeId::Harvest,
         "midnight" => ThemeId::Midnight,
