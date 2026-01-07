@@ -48,7 +48,7 @@ pub enum ThemeId {
     Violet,
     Harvest,
     Midnight,
-    Lavender,
+    Rainbow,
     Frost,
     // Custom themes
     DeepSpace,
@@ -66,7 +66,7 @@ impl ThemeId {
         ThemeId::Violet,
         ThemeId::Harvest,
         ThemeId::Midnight,
-        ThemeId::Lavender,
+        ThemeId::Rainbow,
         ThemeId::Frost,
         ThemeId::DeepSpace,
         ThemeId::Sunset,
@@ -92,7 +92,7 @@ impl ThemeId {
             ThemeId::Violet => "Violet",
             ThemeId::Harvest => "Harvest",
             ThemeId::Midnight => "Midnight",
-            ThemeId::Lavender => "Lavender",
+            ThemeId::Rainbow => "Rainbow",
             ThemeId::Frost => "Frost",
             ThemeId::DeepSpace => "Deep Space",
             ThemeId::Sunset => "Sunset",
@@ -158,8 +158,8 @@ impl ThemeId {
                 dim_text_color: Color::Rgb(86, 95, 137),  // #565F89
                 background: BackgroundMode::Solid(26, 27, 38),  // #1a1b26
             },
-            ThemeId::Lavender => Theme {
-                name: "Lavender",
+            ThemeId::Rainbow => Theme {
+                name: "Rainbow",
                 color_scheme: ColorScheme::Plasma,  // Uses existing Plasma gradient
                 border_color: Color::Rgb(137, 180, 250),  // #89B4FA blue
                 highlight_color: Color::Rgb(249, 226, 175),  // #F9E2AF cream
@@ -220,23 +220,13 @@ impl ThemeId {
 pub fn parse_theme(s: &str) -> ThemeId {
     match s.to_lowercase().replace(['-', '_', ' '], "").as_str() {
         "default" => ThemeId::Default,
-        // New descriptive names
         "lagoon" => ThemeId::Lagoon,
         "cove" => ThemeId::Cove,
         "violet" => ThemeId::Violet,
         "harvest" => ThemeId::Harvest,
         "midnight" => ThemeId::Midnight,
-        "lavender" => ThemeId::Lavender,
+        "rainbow" => ThemeId::Rainbow,
         "frost" => ThemeId::Frost,
-        // Legacy aliases for backwards compatibility
-        "rosepine" => ThemeId::Lagoon,
-        "rosepinemoon" => ThemeId::Cove,
-        "dracula" => ThemeId::Violet,
-        "gruvbox" | "gruvboxdark" => ThemeId::Harvest,
-        "tokyonight" => ThemeId::Midnight,
-        "catppuccin" | "catppuccinmocha" => ThemeId::Lavender,
-        "nord" => ThemeId::Frost,
-        // Other themes
         "deepspace" | "space" => ThemeId::DeepSpace,
         "sunset" => ThemeId::Sunset,
         "matrix" => ThemeId::Matrix,

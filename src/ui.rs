@@ -34,6 +34,13 @@ fn styled_block(title: &str, border_color: Color) -> Block<'_> {
 pub fn render(frame: &mut Frame, app: &App) {
     let area = frame.area();
 
+    // Fill entire frame with theme background color
+    if let BackgroundMode::Solid(r, g, b) = app.theme.background {
+        let bg_block = Block::default()
+            .style(Style::default().bg(Color::Rgb(r, g, b)));
+        frame.render_widget(bg_block, area);
+    }
+
     match app.view_mode {
         ViewMode::Fullscreen => {
             render_canvas(frame, area, app);

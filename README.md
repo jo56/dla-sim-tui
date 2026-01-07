@@ -20,7 +20,7 @@ Diffusion-Limited Aggregation is a process where particles undergo random walks 
 - **27 adjustable parameters** - Fine-tune movement, sticking behavior, spawning, and visuals
 - **Classic mode** - Use `--classic` for canonical Witten-Sander DLA (4-neighbor, unit steps)
 - **Multiple seed patterns** - Points, lines, rings, blocks, spokes, scatter/noise blobs and more
-- **12 color themes** - Rose Pine, Dracula, Gruvbox, Tokyo Night, Nord, and more
+- **12 color themes** - Lagoon, Violet, Harvest, Midnight, Frost, and more
 - **16 color gradients** - Theme-matched gradients plus classic options (Ice, Fire, Plasma, etc.)
 - **Parameter popup** - Quick access to any parameter via Shift+letter
 - **Three view modes** - Default (sidebar + canvas), States (all params visible), Fullscreen (canvas only)
@@ -351,36 +351,27 @@ Control how the simulation is displayed.
 
 ### Themes
 
-12 color themes are available, each with matching UI colors and particle gradients. Use `--theme <name>` or press `T` to cycle.
+12 color themes are available, each with matching UI colors, particle gradients, and solid backgrounds. Use `--theme <name>` or press `T` to cycle.
 
-#### Terminal-Integrated Themes (transparent background)
-These use your terminal's background color for a seamless look.
-
-| Theme | Best For | CLI Name |
-|-------|----------|----------|
-| **Default** | Any terminal | `default` |
-| **Rose Pine** | Rose Pine terminals | `rose-pine` |
-| **Rose Pine Moon** | Rose Pine Moon variant | `rose-pine-moon` |
-| **Dracula** | Dracula theme terminals | `dracula` |
-| **Gruvbox Dark** | Gruvbox terminals | `gruvbox` |
-| **Tokyo Night** | Tokyo Night theme | `tokyo-night` |
-| **Catppuccin** | Catppuccin Mocha | `catppuccin` |
-| **Nord** | Nord theme terminals | `nord` |
-
-#### Solid Background Themes
-These include their own background color for a consistent look anywhere.
-
-| Theme | Background | CLI Name |
-|-------|------------|----------|
-| **Deep Space** | Dark blue-black | `deep-space` |
-| **Sunset** | Dark purple | `sunset` |
-| **Matrix** | Pure black | `matrix` |
-| **Amber** | Dark amber | `amber` |
+| Theme | Description | CLI Name |
+|-------|-------------|----------|
+| **Default** | Cyan/yellow on dark gray | `default` |
+| **Lagoon** | Teal/gold coastal theme | `lagoon` |
+| **Cove** | Cooler teal variant | `cove` |
+| **Violet** | Purple/pink gradient | `violet` |
+| **Harvest** | Earthy orange/yellow | `harvest` |
+| **Midnight** | Deep blue night sky | `midnight` |
+| **Rainbow** | Pastel purple/pink plasma | `rainbow` |
+| **Frost** | Icy cyan/white | `frost` |
+| **Deep Space** | Neon on dark blue | `deep-space` |
+| **Sunset** | Warm red/orange/yellow | `sunset` |
+| **Matrix** | Green terminal aesthetic | `matrix` |
+| **Amber** | Amber monochrome | `amber` |
 
 Example usage:
 ```bash
-dla-sim-tui --theme dracula
-dla-sim-tui --theme rose-pine
+dla-sim-tui --theme violet
+dla-sim-tui --theme lagoon
 dla-sim-tui --theme matrix
 ```
 
