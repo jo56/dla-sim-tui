@@ -18,7 +18,7 @@ A terminal-based Diffusion-Limited Aggregation (DLA) simulation using high-resol
 cargo install --git https://github.com/jo56/dla-sim-tui
 
 # Install a specific release
-cargo install --git https://github.com/jo56/dla-sim-tui --tag v0.0.1
+cargo install --git https://github.com/jo56/dla-sim-tui --tag v0.1.0
 ```
 
 After installation, run directly:
