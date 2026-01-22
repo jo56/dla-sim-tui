@@ -7,6 +7,46 @@ use crate::simulation::{DlaSimulation, SeedPattern};
 use crate::theme::{Theme, ThemeId};
 use std::path::Path;
 
+// Parameter adjustment increments
+const STICKINESS_INCREMENT: f32 = 0.05;
+const PARTICLE_INCREMENT: i32 = 500;
+const WALK_STEP_INCREMENT: f32 = 0.5;
+const ADAPTIVE_FACTOR_INCREMENT: f32 = 0.5;
+const DIRECTION_INCREMENT: f32 = 15.0;
+const FORCE_INCREMENT: f32 = 0.05;
+const RADIAL_BIAS_INCREMENT: f32 = 0.05;
+const TIP_SIDE_STICKY_INCREMENT: f32 = 0.1;
+const MULTI_CONTACT_INCREMENT: i32 = 1;
+const STICKY_GRADIENT_INCREMENT: f32 = 0.1;
+const SPAWN_OFFSET_INCREMENT: f32 = 5.0;
+const ESCAPE_MULT_INCREMENT: f32 = 0.5;
+const MIN_RADIUS_INCREMENT: f32 = 10.0;
+const MAX_ITERATIONS_INCREMENT: i32 = 1000;
+const HIGHLIGHT_INCREMENT: i32 = 5;
+
+/// Navigate within a popup list with wrap-around
+/// direction: 1 for down, -1 for up
+fn nav_popup_index(idx: &mut usize, len: usize, direction: i32) {
+    if len == 0 {
+        return;
+    }
+    if direction > 0 {
+        // Down: wrap to 0 at end
+        if *idx < len.saturating_sub(1) {
+            *idx += 1;
+        } else {
+            *idx = 0;
+        }
+    } else {
+        // Up: wrap to end at 0
+        if *idx > 0 {
+            *idx -= 1;
+        } else {
+            *idx = len.saturating_sub(1);
+        }
+    }
+}
+
 /// Popup menu state for Shift+letter parameter selection
 #[derive(Debug, Clone)]
 pub struct ParamPopup {
@@ -328,91 +368,103 @@ impl App {
     }
 
     /// Handle adjusting the currently focused parameter
-    pub fn adjust_focused_up(&mut self) {
+    /// direction: 1 for up/increase, -1 for down/decrease
+    pub fn adjust_focused(&mut self, direction: i32) {
+        let dir_f32 = direction as f32;
         match self.focus {
             Focus::None | Focus::Controls => {}
-            Focus::Age => self.toggle_color_by_age(),
-            Focus::Stickiness => self.simulation.adjust_stickiness(0.05),
-            Focus::Particles => self.simulation.adjust_particles(500),
+            Focus::Age | Focus::Invert | Focus::AdaptiveStep | Focus::LatticeWalk => {
+                // Toggle parameters - same action regardless of direction
+                match self.focus {
+                    Focus::Age => self.toggle_color_by_age(),
+                    Focus::Invert => self.toggle_invert_colors(),
+                    Focus::AdaptiveStep => self.simulation.settings.toggle_adaptive_step(),
+                    Focus::LatticeWalk => self.simulation.settings.toggle_lattice_walk(),
+                    _ => {}
+                }
+            }
+            Focus::Stickiness => self.simulation.adjust_stickiness(dir_f32 * STICKINESS_INCREMENT),
+            Focus::Particles => self.simulation.adjust_particles(direction * PARTICLE_INCREMENT),
             Focus::Seed => {
-                let new_pattern = self.simulation.seed_pattern.next();
+                let new_pattern = if direction > 0 {
+                    self.simulation.seed_pattern.next()
+                } else {
+                    self.simulation.seed_pattern.prev()
+                };
                 self.simulation.reset_with_seed(new_pattern);
             }
             Focus::ColorScheme => {
-                self.color_scheme = self.color_scheme.next();
+                self.color_scheme = if direction > 0 {
+                    self.color_scheme.next()
+                } else {
+                    self.color_scheme.prev()
+                };
                 self.color_lut = self.color_scheme.build_lut();
             }
-            Focus::Speed => self.steps_per_frame = (self.steps_per_frame + 1).min(100),
+            Focus::Speed => {
+                if direction > 0 {
+                    self.steps_per_frame = (self.steps_per_frame + 1).min(100);
+                } else {
+                    self.steps_per_frame = self.steps_per_frame.saturating_sub(1).max(1);
+                }
+            }
             // Visual
-            Focus::Mode => self.cycle_color_mode(),
-            Focus::Highlight => self.adjust_highlight(5),
-            Focus::Invert => self.toggle_invert_colors(),
+            Focus::Mode => {
+                if direction > 0 {
+                    self.cycle_color_mode();
+                } else {
+                    self.cycle_color_mode_prev();
+                }
+            }
+            Focus::Highlight => self.adjust_highlight(direction * HIGHLIGHT_INCREMENT),
             // Movement
-            Focus::AdaptiveStep => self.simulation.settings.toggle_adaptive_step(),
-            Focus::AdaptiveFactor => self.simulation.settings.adjust_adaptive_step_factor(0.5),
-            Focus::LatticeWalk => self.simulation.settings.toggle_lattice_walk(),
-            Focus::WalkStep => self.adjust_walk_step(0.5),
-            Focus::Direction => self.simulation.settings.adjust_walk_bias_angle(15.0),
-            Focus::Force => self.simulation.settings.adjust_walk_bias_strength(0.05),
-            Focus::RadialBias => self.simulation.settings.adjust_radial_bias(0.05),
+            Focus::AdaptiveFactor => self.simulation.settings.adjust_adaptive_step_factor(dir_f32 * ADAPTIVE_FACTOR_INCREMENT),
+            Focus::WalkStep => self.adjust_walk_step(dir_f32 * WALK_STEP_INCREMENT),
+            Focus::Direction => self.simulation.settings.adjust_walk_bias_angle(dir_f32 * DIRECTION_INCREMENT),
+            Focus::Force => self.simulation.settings.adjust_walk_bias_strength(dir_f32 * FORCE_INCREMENT),
+            Focus::RadialBias => self.simulation.settings.adjust_radial_bias(dir_f32 * RADIAL_BIAS_INCREMENT),
             // Sticking
-            Focus::Neighborhood => self.cycle_neighborhood(),
-            Focus::TipSticky => self.simulation.settings.adjust_tip_stickiness(0.1),
-            Focus::SideSticky => self.simulation.settings.adjust_side_stickiness(0.1),
-            Focus::MultiContact => self.simulation.settings.adjust_multi_contact_min(1),
-            Focus::StickyGradient => self.simulation.settings.adjust_stickiness_gradient(0.1),
+            Focus::Neighborhood => {
+                if direction > 0 {
+                    self.cycle_neighborhood();
+                } else {
+                    self.cycle_neighborhood_prev();
+                }
+            }
+            Focus::TipSticky => self.simulation.settings.adjust_tip_stickiness(dir_f32 * TIP_SIDE_STICKY_INCREMENT),
+            Focus::SideSticky => self.simulation.settings.adjust_side_stickiness(dir_f32 * TIP_SIDE_STICKY_INCREMENT),
+            Focus::MultiContact => self.simulation.settings.adjust_multi_contact_min(direction * MULTI_CONTACT_INCREMENT),
+            Focus::StickyGradient => self.simulation.settings.adjust_stickiness_gradient(dir_f32 * STICKY_GRADIENT_INCREMENT),
             // Spawn
-            Focus::Spawn => self.cycle_spawn_mode(),
-            Focus::Boundary => self.cycle_boundary(),
-            Focus::SpawnOffset => self.simulation.settings.adjust_spawn_radius_offset(5.0),
-            Focus::EscapeMult => self.simulation.settings.adjust_escape_multiplier(0.5),
-            Focus::MinRadius => self.simulation.settings.adjust_min_spawn_radius(10.0),
-            Focus::MaxIterations => self.simulation.settings.adjust_max_walk_iterations(1000),
+            Focus::Spawn => {
+                if direction > 0 {
+                    self.cycle_spawn_mode();
+                } else {
+                    self.cycle_spawn_mode_prev();
+                }
+            }
+            Focus::Boundary => {
+                if direction > 0 {
+                    self.cycle_boundary();
+                } else {
+                    self.cycle_boundary_prev();
+                }
+            }
+            Focus::SpawnOffset => self.simulation.settings.adjust_spawn_radius_offset(dir_f32 * SPAWN_OFFSET_INCREMENT),
+            Focus::EscapeMult => self.simulation.settings.adjust_escape_multiplier(dir_f32 * ESCAPE_MULT_INCREMENT),
+            Focus::MinRadius => self.simulation.settings.adjust_min_spawn_radius(dir_f32 * MIN_RADIUS_INCREMENT),
+            Focus::MaxIterations => self.simulation.settings.adjust_max_walk_iterations(direction * MAX_ITERATIONS_INCREMENT),
         }
     }
 
-    /// Handle adjusting the currently focused parameter
+    /// Handle adjusting the currently focused parameter up
+    pub fn adjust_focused_up(&mut self) {
+        self.adjust_focused(1);
+    }
+
+    /// Handle adjusting the currently focused parameter down
     pub fn adjust_focused_down(&mut self) {
-        match self.focus {
-            Focus::None | Focus::Controls => {}
-            Focus::Age => self.toggle_color_by_age(),
-            Focus::Stickiness => self.simulation.adjust_stickiness(-0.05),
-            Focus::Particles => self.simulation.adjust_particles(-500),
-            Focus::Seed => {
-                let new_pattern = self.simulation.seed_pattern.prev();
-                self.simulation.reset_with_seed(new_pattern);
-            }
-            Focus::ColorScheme => {
-                self.color_scheme = self.color_scheme.prev();
-                self.color_lut = self.color_scheme.build_lut();
-            }
-            Focus::Speed => self.steps_per_frame = (self.steps_per_frame.saturating_sub(1)).max(1),
-            // Visual
-            Focus::Mode => self.cycle_color_mode_prev(),
-            Focus::Highlight => self.adjust_highlight(-5),
-            Focus::Invert => self.toggle_invert_colors(),
-            // Movement
-            Focus::AdaptiveStep => self.simulation.settings.toggle_adaptive_step(),
-            Focus::AdaptiveFactor => self.simulation.settings.adjust_adaptive_step_factor(-0.5),
-            Focus::LatticeWalk => self.simulation.settings.toggle_lattice_walk(),
-            Focus::WalkStep => self.adjust_walk_step(-0.5),
-            Focus::Direction => self.simulation.settings.adjust_walk_bias_angle(-15.0),
-            Focus::Force => self.simulation.settings.adjust_walk_bias_strength(-0.05),
-            Focus::RadialBias => self.simulation.settings.adjust_radial_bias(-0.05),
-            // Sticking
-            Focus::Neighborhood => self.cycle_neighborhood_prev(),
-            Focus::TipSticky => self.simulation.settings.adjust_tip_stickiness(-0.1),
-            Focus::SideSticky => self.simulation.settings.adjust_side_stickiness(-0.1),
-            Focus::MultiContact => self.simulation.settings.adjust_multi_contact_min(-1),
-            Focus::StickyGradient => self.simulation.settings.adjust_stickiness_gradient(-0.1),
-            // Spawn
-            Focus::Spawn => self.cycle_spawn_mode_prev(),
-            Focus::Boundary => self.cycle_boundary_prev(),
-            Focus::SpawnOffset => self.simulation.settings.adjust_spawn_radius_offset(-5.0),
-            Focus::EscapeMult => self.simulation.settings.adjust_escape_multiplier(-0.5),
-            Focus::MinRadius => self.simulation.settings.adjust_min_spawn_radius(-10.0),
-            Focus::MaxIterations => self.simulation.settings.adjust_max_walk_iterations(-1000),
-        }
+        self.adjust_focused(-1);
     }
 
     /// Cycle to next focus
@@ -674,22 +726,14 @@ impl App {
     /// Navigate up in popup
     pub fn popup_nav_up(&mut self) {
         if let Some(popup) = &mut self.param_popup {
-            if popup.selected_idx > 0 {
-                popup.selected_idx -= 1;
-            } else {
-                popup.selected_idx = popup.options.len().saturating_sub(1);
-            }
+            nav_popup_index(&mut popup.selected_idx, popup.options.len(), -1);
         }
     }
 
     /// Navigate down in popup
     pub fn popup_nav_down(&mut self) {
         if let Some(popup) = &mut self.param_popup {
-            if popup.selected_idx < popup.options.len().saturating_sub(1) {
-                popup.selected_idx += 1;
-            } else {
-                popup.selected_idx = 0;
-            }
+            nav_popup_index(&mut popup.selected_idx, popup.options.len(), 1);
         }
     }
 
@@ -817,8 +861,13 @@ impl App {
                 invert,
             ) {
                 // Store error and stop recording
-                self.recording_result = Some(Err(e));
-                let _ = self.recorder.stop();
+                // If stop also fails, append that error to the message
+                let stop_result = self.recorder.stop();
+                let full_error = match stop_result {
+                    Ok(_) => e,
+                    Err(stop_err) => format!("{}; failed to stop: {}", e, stop_err),
+                };
+                self.recording_result = Some(Err(full_error));
             }
         }
     }
@@ -898,22 +947,14 @@ impl App {
     /// Navigate up in preset popup
     pub fn preset_popup_nav_up(&mut self) {
         if let Some(popup) = &mut self.preset_popup {
-            if popup.selected_idx > 0 {
-                popup.selected_idx -= 1;
-            } else {
-                popup.selected_idx = popup.names.len().saturating_sub(1);
-            }
+            nav_popup_index(&mut popup.selected_idx, popup.names.len(), -1);
         }
     }
 
     /// Navigate down in preset popup
     pub fn preset_popup_nav_down(&mut self) {
         if let Some(popup) = &mut self.preset_popup {
-            if popup.selected_idx < popup.names.len().saturating_sub(1) {
-                popup.selected_idx += 1;
-            } else {
-                popup.selected_idx = 0;
-            }
+            nav_popup_index(&mut popup.selected_idx, popup.names.len(), 1);
         }
     }
 

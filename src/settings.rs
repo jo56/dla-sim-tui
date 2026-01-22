@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 /// Neighborhood type for sticking checks
 #[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
@@ -53,6 +54,19 @@ impl NeighborhoodType {
                 (-2, 1),  (-1, 1),  (0, 1),  (1, 1),  (2, 1),
                 (-2, 2),  (-1, 2),  (0, 2),  (1, 2),  (2, 2),
             ],
+        }
+    }
+}
+
+impl FromStr for NeighborhoodType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "vonneumann" | "von-neumann" | "vn" | "4" => Ok(NeighborhoodType::VonNeumann),
+            "moore" | "8" => Ok(NeighborhoodType::Moore),
+            "extended" | "ext" | "24" => Ok(NeighborhoodType::Extended),
+            _ => Err(format!("unknown neighborhood type: {}", s)),
         }
     }
 }
@@ -120,6 +134,24 @@ impl SpawnMode {
     }
 }
 
+impl FromStr for SpawnMode {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "circle" => Ok(SpawnMode::Circle),
+            "edges" | "edge" => Ok(SpawnMode::Edges),
+            "corners" | "corner" => Ok(SpawnMode::Corners),
+            "random" | "rand" => Ok(SpawnMode::Random),
+            "top" => Ok(SpawnMode::Top),
+            "bottom" => Ok(SpawnMode::Bottom),
+            "left" => Ok(SpawnMode::Left),
+            "right" => Ok(SpawnMode::Right),
+            _ => Err(format!("unknown spawn mode: {}", s)),
+        }
+    }
+}
+
 /// Boundary behavior - what happens when particles hit grid edges
 #[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
 pub enum BoundaryBehavior {
@@ -168,6 +200,21 @@ impl BoundaryBehavior {
     }
 }
 
+impl FromStr for BoundaryBehavior {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "clamp" => Ok(BoundaryBehavior::Clamp),
+            "wrap" | "toroidal" => Ok(BoundaryBehavior::Wrap),
+            "bounce" | "reflect" => Ok(BoundaryBehavior::Bounce),
+            "stick" => Ok(BoundaryBehavior::Stick),
+            "absorb" | "respawn" => Ok(BoundaryBehavior::Absorb),
+            _ => Err(format!("unknown boundary behavior: {}", s)),
+        }
+    }
+}
+
 /// Color mode - what property determines particle color
 #[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
 pub enum ColorMode {
@@ -207,6 +254,20 @@ impl ColorMode {
             ColorMode::Distance => ColorMode::Age,
             ColorMode::Density => ColorMode::Distance,
             ColorMode::Direction => ColorMode::Density,
+        }
+    }
+}
+
+impl FromStr for ColorMode {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "age" => Ok(ColorMode::Age),
+            "distance" | "dist" => Ok(ColorMode::Distance),
+            "density" | "dens" => Ok(ColorMode::Density),
+            "direction" | "dir" => Ok(ColorMode::Direction),
+            _ => Err(format!("unknown color mode: {}", s)),
         }
     }
 }

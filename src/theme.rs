@@ -16,7 +16,7 @@ pub enum BackgroundMode {
 /// Complete theme configuration
 #[derive(Debug, Clone)]
 pub struct Theme {
-    /// Human-readable theme name
+    /// Human-readable theme name (kept for debugging and potential future UI display)
     #[allow(dead_code)]
     pub name: &'static str,
     /// Particle color gradient scheme
@@ -86,6 +86,7 @@ impl ThemeId {
         Self::ALL[(idx + Self::ALL.len() - 1) % Self::ALL.len()]
     }
 
+    /// Get display name for this theme (kept for potential future UI display/export)
     #[allow(dead_code)]
     pub fn name(&self) -> &'static str {
         match self {

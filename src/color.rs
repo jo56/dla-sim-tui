@@ -1,6 +1,29 @@
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 
+// Color gradient constants
+/// First threshold for 3-stop gradients (33%)
+const GRADIENT_STOP_1: f32 = 0.33;
+/// Second threshold for 3-stop gradients (66%)
+const GRADIENT_STOP_2: f32 = 0.66;
+/// Remaining range after second stop (34%)
+const GRADIENT_STOP_3_RANGE: f32 = 0.34;
+/// Midpoint threshold for 2-stop gradients
+const GRADIENT_MID: f32 = 0.5;
+
+// Ice gradient color coefficients (dark blue -> cyan -> white)
+const ICE_RED_BASE: f32 = 200.0;
+const ICE_RED_QUADRATIC: f32 = 55.0;
+const ICE_GREEN_BASE: f32 = 220.0;
+const ICE_GREEN_LINEAR: f32 = 35.0;
+const ICE_BLUE_BASE: f32 = 180.0;
+const ICE_BLUE_LINEAR: f32 = 75.0;
+
+// Plasma gradient phase offsets for sinusoidal color cycling
+const PLASMA_PHASE_GREEN: f32 = 0.33;
+const PLASMA_PHASE_BLUE: f32 = 0.67;
+const PLASMA_MIN_RED: u8 = 50;
+
 /// Pre-computed color lookup table (256 entries for fast gradient access)
 pub type ColorLut = [Color; 256];
 
@@ -139,32 +162,32 @@ impl ColorScheme {
 
     fn ice_gradient(t: f32) -> (u8, u8, u8) {
         // Dark blue -> cyan -> white
-        let r = (t * 200.0 + 55.0 * t * t) as u8;
-        let g = (t * 220.0 + 35.0 * t) as u8;
-        let b = (180.0 + 75.0 * t) as u8;
+        let r = (t * ICE_RED_BASE + ICE_RED_QUADRATIC * t * t) as u8;
+        let g = (t * ICE_GREEN_BASE + ICE_GREEN_LINEAR * t) as u8;
+        let b = (ICE_BLUE_BASE + ICE_BLUE_LINEAR * t) as u8;
         (r, g, b)
     }
 
     fn fire_gradient(t: f32) -> (u8, u8, u8) {
         // Black -> red -> orange -> yellow -> white
-        if t < 0.33 {
-            let s = t / 0.33;
+        if t < GRADIENT_STOP_1 {
+            let s = t / GRADIENT_STOP_1;
             ((s * 200.0) as u8, 0, 0)
-        } else if t < 0.66 {
-            let s = (t - 0.33) / 0.33;
+        } else if t < GRADIENT_STOP_2 {
+            let s = (t - GRADIENT_STOP_1) / GRADIENT_STOP_1;
             (200 + (s * 55.0) as u8, (s * 150.0) as u8, 0)
         } else {
-            let s = (t - 0.66) / 0.34;
+            let s = (t - GRADIENT_STOP_2) / GRADIENT_STOP_3_RANGE;
             (255, 150 + (s * 105.0) as u8, (s * 200.0) as u8)
         }
     }
 
     fn plasma_gradient(t: f32) -> (u8, u8, u8) {
-        // Purple -> pink -> orange -> yellow
-        let r = ((0.5 + 0.5 * (std::f32::consts::TAU * (t + 0.0)).sin()) * 255.0) as u8;
-        let g = ((0.5 + 0.5 * (std::f32::consts::TAU * (t + 0.33)).sin()) * 200.0) as u8;
-        let b = ((0.5 + 0.5 * (std::f32::consts::TAU * (t + 0.67)).sin()) * 255.0) as u8;
-        (r.max(50), g, b)
+        // Purple -> pink -> orange -> yellow (sinusoidal color cycling)
+        let r = ((0.5 + 0.5 * (std::f32::consts::TAU * t).sin()) * 255.0) as u8;
+        let g = ((0.5 + 0.5 * (std::f32::consts::TAU * (t + PLASMA_PHASE_GREEN)).sin()) * 200.0) as u8;
+        let b = ((0.5 + 0.5 * (std::f32::consts::TAU * (t + PLASMA_PHASE_BLUE)).sin()) * 255.0) as u8;
+        (r.max(PLASMA_MIN_RED), g, b)
     }
 
     fn viridis_gradient(t: f32) -> (u8, u8, u8) {
@@ -198,11 +221,11 @@ impl ColorScheme {
 
     fn neon_gradient(t: f32) -> (u8, u8, u8) {
         // Bright neon colors: magenta -> cyan -> green
-        if t < 0.5 {
-            let s = t / 0.5;
+        if t < GRADIENT_MID {
+            let s = t / GRADIENT_MID;
             (255 - (s * 255.0) as u8, (s * 255.0) as u8, 255)
         } else {
-            let s = (t - 0.5) / 0.5;
+            let s = (t - GRADIENT_MID) / GRADIENT_MID;
             (0, 255, 255 - (s * 255.0) as u8)
         }
     }
@@ -238,14 +261,14 @@ impl ColorScheme {
     fn lagoon_gradient(t: f32) -> (u8, u8, u8) {
         // Deep purple -> teal -> gold -> rose (coastal lagoon colors)
         // #191724 -> #31748F -> #F6C177 -> #EBBCBA
-        if t < 0.33 {
-            let s = t / 0.33;
+        if t < GRADIENT_STOP_1 {
+            let s = t / GRADIENT_STOP_1;
             Self::lerp_rgb((25, 23, 36), (49, 116, 143), s)
-        } else if t < 0.66 {
-            let s = (t - 0.33) / 0.33;
+        } else if t < GRADIENT_STOP_2 {
+            let s = (t - GRADIENT_STOP_1) / GRADIENT_STOP_1;
             Self::lerp_rgb((49, 116, 143), (246, 193, 119), s)
         } else {
-            let s = (t - 0.66) / 0.34;
+            let s = (t - GRADIENT_STOP_2) / GRADIENT_STOP_3_RANGE;
             Self::lerp_rgb((246, 193, 119), (235, 188, 186), s)
         }
     }
@@ -253,14 +276,14 @@ impl ColorScheme {
     fn violet_gradient(t: f32) -> (u8, u8, u8) {
         // Dark background -> purple -> pink -> cyan
         // #282A36 -> #BD93F9 -> #FF79C6 -> #8BE9FD
-        if t < 0.33 {
-            let s = t / 0.33;
+        if t < GRADIENT_STOP_1 {
+            let s = t / GRADIENT_STOP_1;
             Self::lerp_rgb((40, 42, 54), (189, 147, 249), s)
-        } else if t < 0.66 {
-            let s = (t - 0.33) / 0.33;
+        } else if t < GRADIENT_STOP_2 {
+            let s = (t - GRADIENT_STOP_1) / GRADIENT_STOP_1;
             Self::lerp_rgb((189, 147, 249), (255, 121, 198), s)
         } else {
-            let s = (t - 0.66) / 0.34;
+            let s = (t - GRADIENT_STOP_2) / GRADIENT_STOP_3_RANGE;
             Self::lerp_rgb((255, 121, 198), (139, 233, 253), s)
         }
     }
@@ -268,14 +291,14 @@ impl ColorScheme {
     fn harvest_gradient(t: f32) -> (u8, u8, u8) {
         // Dark background -> orange -> yellow -> bright yellow (autumn harvest)
         // #282828 -> #D65D0E -> #D79921 -> #FABD2F
-        if t < 0.33 {
-            let s = t / 0.33;
+        if t < GRADIENT_STOP_1 {
+            let s = t / GRADIENT_STOP_1;
             Self::lerp_rgb((40, 40, 40), (214, 93, 14), s)
-        } else if t < 0.66 {
-            let s = (t - 0.33) / 0.33;
+        } else if t < GRADIENT_STOP_2 {
+            let s = (t - GRADIENT_STOP_1) / GRADIENT_STOP_1;
             Self::lerp_rgb((214, 93, 14), (215, 153, 33), s)
         } else {
-            let s = (t - 0.66) / 0.34;
+            let s = (t - GRADIENT_STOP_2) / GRADIENT_STOP_3_RANGE;
             Self::lerp_rgb((215, 153, 33), (250, 189, 47), s)
         }
     }
@@ -283,14 +306,14 @@ impl ColorScheme {
     fn midnight_gradient(t: f32) -> (u8, u8, u8) {
         // Deep blue -> blue -> purple -> light lavender (midnight sky)
         // #1A1B26 -> #7AA2F7 -> #BB9AF7 -> #C0CAF5
-        if t < 0.33 {
-            let s = t / 0.33;
+        if t < GRADIENT_STOP_1 {
+            let s = t / GRADIENT_STOP_1;
             Self::lerp_rgb((26, 27, 38), (122, 162, 247), s)
-        } else if t < 0.66 {
-            let s = (t - 0.33) / 0.33;
+        } else if t < GRADIENT_STOP_2 {
+            let s = (t - GRADIENT_STOP_1) / GRADIENT_STOP_1;
             Self::lerp_rgb((122, 162, 247), (187, 154, 247), s)
         } else {
-            let s = (t - 0.66) / 0.34;
+            let s = (t - GRADIENT_STOP_2) / GRADIENT_STOP_3_RANGE;
             Self::lerp_rgb((187, 154, 247), (192, 202, 245), s)
         }
     }
@@ -298,14 +321,14 @@ impl ColorScheme {
     fn frost_gradient(t: f32) -> (u8, u8, u8) {
         // Dark -> frost blue -> bright frost -> snow (icy frost)
         // #2E3440 -> #5E81AC -> #88C0D0 -> #ECEFF4
-        if t < 0.33 {
-            let s = t / 0.33;
+        if t < GRADIENT_STOP_1 {
+            let s = t / GRADIENT_STOP_1;
             Self::lerp_rgb((46, 52, 64), (94, 129, 172), s)
-        } else if t < 0.66 {
-            let s = (t - 0.33) / 0.33;
+        } else if t < GRADIENT_STOP_2 {
+            let s = (t - GRADIENT_STOP_1) / GRADIENT_STOP_1;
             Self::lerp_rgb((94, 129, 172), (136, 192, 208), s)
         } else {
-            let s = (t - 0.66) / 0.34;
+            let s = (t - GRADIENT_STOP_2) / GRADIENT_STOP_3_RANGE;
             Self::lerp_rgb((136, 192, 208), (236, 239, 244), s)
         }
     }
@@ -313,14 +336,14 @@ impl ColorScheme {
     fn sunset_gradient(t: f32) -> (u8, u8, u8) {
         // Dark purple -> red -> orange -> yellow
         // #1A1423 -> #FF6B6B -> #FFA07A -> #FFE66D
-        if t < 0.33 {
-            let s = t / 0.33;
+        if t < GRADIENT_STOP_1 {
+            let s = t / GRADIENT_STOP_1;
             Self::lerp_rgb((26, 20, 35), (255, 107, 107), s)
-        } else if t < 0.66 {
-            let s = (t - 0.33) / 0.33;
+        } else if t < GRADIENT_STOP_2 {
+            let s = (t - GRADIENT_STOP_1) / GRADIENT_STOP_1;
             Self::lerp_rgb((255, 107, 107), (255, 160, 122), s)
         } else {
-            let s = (t - 0.66) / 0.34;
+            let s = (t - GRADIENT_STOP_2) / GRADIENT_STOP_3_RANGE;
             Self::lerp_rgb((255, 160, 122), (255, 230, 109), s)
         }
     }
@@ -328,14 +351,14 @@ impl ColorScheme {
     fn matrix_gradient(t: f32) -> (u8, u8, u8) {
         // Black -> dark green -> bright green -> yellow-green
         // #0A0A0A -> #003B00 -> #00FF41 -> #ADFF2F
-        if t < 0.33 {
-            let s = t / 0.33;
+        if t < GRADIENT_STOP_1 {
+            let s = t / GRADIENT_STOP_1;
             Self::lerp_rgb((10, 10, 10), (0, 59, 0), s)
-        } else if t < 0.66 {
-            let s = (t - 0.33) / 0.33;
+        } else if t < GRADIENT_STOP_2 {
+            let s = (t - GRADIENT_STOP_1) / GRADIENT_STOP_1;
             Self::lerp_rgb((0, 59, 0), (0, 255, 65), s)
         } else {
-            let s = (t - 0.66) / 0.34;
+            let s = (t - GRADIENT_STOP_2) / GRADIENT_STOP_3_RANGE;
             Self::lerp_rgb((0, 255, 65), (173, 255, 47), s)
         }
     }
@@ -343,14 +366,14 @@ impl ColorScheme {
     fn amber_gradient(t: f32) -> (u8, u8, u8) {
         // Dark -> dark amber -> amber -> gold
         // #1A1A0A -> #8B4000 -> #FFB000 -> #FFCC00
-        if t < 0.33 {
-            let s = t / 0.33;
+        if t < GRADIENT_STOP_1 {
+            let s = t / GRADIENT_STOP_1;
             Self::lerp_rgb((26, 26, 10), (139, 64, 0), s)
-        } else if t < 0.66 {
-            let s = (t - 0.33) / 0.33;
+        } else if t < GRADIENT_STOP_2 {
+            let s = (t - GRADIENT_STOP_1) / GRADIENT_STOP_1;
             Self::lerp_rgb((139, 64, 0), (255, 176, 0), s)
         } else {
-            let s = (t - 0.66) / 0.34;
+            let s = (t - GRADIENT_STOP_2) / GRADIENT_STOP_3_RANGE;
             Self::lerp_rgb((255, 176, 0), (255, 204, 0), s)
         }
     }

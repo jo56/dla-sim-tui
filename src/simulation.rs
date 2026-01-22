@@ -3,7 +3,26 @@ use rand::rngs::ThreadRng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
+// Simulation boundary and spawn constants
 const BOUNDARY_MARGIN: f32 = 1.0;
+/// Extra buffer beyond max_radius for spawn circle (20% expansion)
+const SPAWN_RADIUS_EXPANSION: f32 = 1.2;
+
+// Seed pattern geometry constants
+/// Ring thickness for the ring seed pattern
+const RING_THICKNESS: f32 = 2.5;
+/// Noise patch radius as fraction of minimum dimension
+const NOISE_PATCH_RADIUS_FACTOR: f32 = 0.22;
+/// Ring radius as fraction of minimum dimension
+const RING_RADIUS_FACTOR: f32 = 0.30;
+/// Maximum ring radius as fraction of minimum dimension
+const RING_MAX_FACTOR: f32 = 0.45;
+/// Starburst spoke length as fraction of minimum dimension
+const STARBURST_SPOKE_FACTOR: f32 = 0.35;
+/// Noise patch density at core
+const NOISE_CORE_DENSITY: f32 = 0.35;
+/// Additional density falloff for noise patch edges
+const NOISE_EDGE_DENSITY: f32 = 0.65;
 
 /// Seed pattern types for initial structure
 #[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
@@ -142,8 +161,7 @@ impl DlaSimulation {
         let lattice_walk = self.settings.lattice_walk;
 
         // Spawn radius - outside the structure with proportional buffer
-        // Uses 20% extra beyond max_radius plus fixed offset for better scaling
-        let spawn_radius = (self.max_radius * 1.2 + spawn_radius_offset).max(min_spawn_radius);
+        let spawn_radius = (self.max_radius * SPAWN_RADIUS_EXPANSION + spawn_radius_offset).max(min_spawn_radius);
 
         // Pre-calculate squared escape distance (avoids sqrt in hot loop)
         let escape_dist_sq = spawn_radius * spawn_radius * escape_mult * escape_mult;
@@ -639,8 +657,8 @@ impl DlaSimulation {
     fn seed_ring(&mut self) {
         let (cx, cy) = self.center();
         let min_dim = self.grid_width.min(self.grid_height) as f32;
-        let radius = (min_dim * 0.30).clamp(6.0, min_dim * 0.45);
-        let thickness = 2.5_f32;
+        let radius = (min_dim * RING_RADIUS_FACTOR).clamp(6.0, min_dim * RING_MAX_FACTOR);
+        let thickness = RING_THICKNESS;
         let seed_data = self.seed_particle();
         let mut count = 0;
 
@@ -694,7 +712,7 @@ impl DlaSimulation {
     fn seed_noise_patch(&mut self) {
         let (grid_cx, grid_cy) = self.center();
         let min_dim = self.grid_width.min(self.grid_height) as f32;
-        let radius = (min_dim * 0.22).clamp(6.0, 30.0);
+        let radius = (min_dim * NOISE_PATCH_RADIUS_FACTOR).clamp(6.0, 30.0);
         let radius_i = radius as i32;
         let jitter = (radius_i / 3).max(1);
         let mut patch_cx = (self.grid_width as i32 / 3) + self.rng.gen_range(-jitter..=jitter);
@@ -713,7 +731,7 @@ impl DlaSimulation {
                 let dist = ((dx * dx + dy * dy) as f32).sqrt();
                 if dist <= radius {
                     let falloff = 1.0 - dist / radius;
-                    let stick_prob = 0.35 + falloff * 0.65; // Dense core, noisy edges
+                    let stick_prob = NOISE_CORE_DENSITY + falloff * NOISE_EDGE_DENSITY; // Dense core, noisy edges
                     if self.rng.gen::<f32>() < stick_prob {
                         let idx = (y as usize) * self.grid_width + (x as usize);
                         if self.grid[idx].is_none() {
@@ -804,7 +822,7 @@ impl DlaSimulation {
     fn seed_starburst(&mut self) {
         let (cx, cy) = self.center();
         let min_dim = self.grid_width.min(self.grid_height) as f32;
-        let spoke_len = (min_dim * 0.35).clamp(8.0, 40.0);
+        let spoke_len = (min_dim * STARBURST_SPOKE_FACTOR).clamp(8.0, 40.0);
         let spokes = 8;
         let seed_data = self.seed_particle();
         let mut count = 0;
@@ -932,8 +950,8 @@ impl DlaSimulation {
             return (0.0, 0.0);
         }
 
-        let mut log_n: Vec<f32> = Vec::new();
-        let mut log_r: Vec<f32> = Vec::new();
+        let mut log_n: Vec<f32> = Vec::with_capacity(box_sizes.len());
+        let mut log_r: Vec<f32> = Vec::with_capacity(box_sizes.len());
 
         for box_size in &box_sizes {
             let mut count = 0;

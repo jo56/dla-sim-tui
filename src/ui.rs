@@ -9,8 +9,13 @@ use ratatui::{
     Frame,
 };
 
+// UI Layout Constants
 const SIDEBAR_WIDTH: u16 = 22;
 const STATES_PANEL_WIDTH: u16 = 48;
+const POPUP_PADDING: u16 = 4;
+const TOAST_HEIGHT: u16 = 3;
+const TOAST_BOTTOM_OFFSET: u16 = 5;
+const MIN_POPUP_WIDTH: u16 = 20;
 
 /// Max scroll for help content (generous to account for text wrapping on small screens)
 pub const HELP_CONTENT_LINES: u16 = 79;
@@ -1180,22 +1185,19 @@ fn render_export_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup, th
     frame.render_widget(paragraph, popup_area);
 }
 
-/// Render export result toast (success or error message)
-fn render_export_result(frame: &mut Frame, area: Rect, result: &Result<String, String>, theme: &crate::theme::Theme) {
-    let (message, color) = match result {
-        Ok(filename) => (format!("Saved: {}", filename), theme.success_color),
-        Err(e) => (format!("Error: {}", e), theme.error_color),
-    };
-
-    let msg_width = (message.len() as u16 + 4).min(area.width.saturating_sub(4));
+/// Render a result toast message at the bottom of the screen
+fn render_result_toast(frame: &mut Frame, area: Rect, message: &str, color: Color) {
+    let msg_width = (message.len() as u16 + POPUP_PADDING)
+        .min(area.width.saturating_sub(POPUP_PADDING))
+        .max(MIN_POPUP_WIDTH);
     let popup_x = area.x + (area.width.saturating_sub(msg_width)) / 2;
-    let popup_y = area.y + area.height.saturating_sub(5);
+    let popup_y = area.y + area.height.saturating_sub(TOAST_BOTTOM_OFFSET);
 
     let popup_area = Rect {
         x: popup_x,
         y: popup_y,
         width: msg_width,
-        height: 3,
+        height: TOAST_HEIGHT,
     };
 
     frame.render_widget(Clear, popup_area);
@@ -1206,13 +1208,22 @@ fn render_export_result(frame: &mut Frame, area: Rect, result: &Result<String, S
         .border_style(Style::default().fg(color));
 
     let paragraph = Paragraph::new(Line::from(Span::styled(
-        message,
+        message.to_string(),
         Style::default().fg(color),
     )))
     .block(block)
     .alignment(Alignment::Center);
 
     frame.render_widget(paragraph, popup_area);
+}
+
+/// Render export result toast (success or error message)
+fn render_export_result(frame: &mut Frame, area: Rect, result: &Result<String, String>, theme: &crate::theme::Theme) {
+    let (message, color) = match result {
+        Ok(filename) => (format!("Saved: {}", filename), theme.success_color),
+        Err(e) => (format!("Error: {}", e), theme.error_color),
+    };
+    render_result_toast(frame, area, &message, color);
 }
 
 /// Render text input popup for recording filename
@@ -1273,36 +1284,10 @@ fn render_recording_popup(frame: &mut Frame, area: Rect, popup: &TextInputPopup,
 /// Render recording result toast (success or error message)
 fn render_recording_result(frame: &mut Frame, area: Rect, result: &Result<String, String>, theme: &crate::theme::Theme) {
     let (message, color) = match result {
-        Ok(msg) => (msg.clone(), theme.success_color),
-        Err(e) => (format!("Error: {}", e), theme.error_color),
+        Ok(msg) => (msg.as_str(), theme.success_color),
+        Err(e) => return render_result_toast(frame, area, &format!("Error: {}", e), theme.error_color),
     };
-
-    let msg_width = (message.len() as u16 + 4).min(area.width.saturating_sub(4)).max(20);
-    let popup_x = area.x + (area.width.saturating_sub(msg_width)) / 2;
-    let popup_y = area.y + area.height.saturating_sub(5);
-
-    let popup_area = Rect {
-        x: popup_x,
-        y: popup_y,
-        width: msg_width,
-        height: 3,
-    };
-
-    frame.render_widget(Clear, popup_area);
-
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(color));
-
-    let paragraph = Paragraph::new(Line::from(Span::styled(
-        message,
-        Style::default().fg(color),
-    )))
-    .block(block)
-    .alignment(Alignment::Center);
-
-    frame.render_widget(paragraph, popup_area);
+    render_result_toast(frame, area, message, color);
 }
 
 /// Render preset selection popup
@@ -1366,36 +1351,10 @@ fn render_preset_popup(frame: &mut Frame, area: Rect, popup: &PresetPopup, theme
 /// Render preset result toast (success or error message)
 fn render_preset_result(frame: &mut Frame, area: Rect, result: &Result<String, String>, theme: &crate::theme::Theme) {
     let (message, color) = match result {
-        Ok(msg) => (msg.clone(), theme.success_color),
-        Err(e) => (format!("Error: {}", e), theme.error_color),
+        Ok(msg) => (msg.as_str(), theme.success_color),
+        Err(e) => return render_result_toast(frame, area, &format!("Error: {}", e), theme.error_color),
     };
-
-    let msg_width = (message.len() as u16 + 4).min(area.width.saturating_sub(4)).max(20);
-    let popup_x = area.x + (area.width.saturating_sub(msg_width)) / 2;
-    let popup_y = area.y + area.height.saturating_sub(5);
-
-    let popup_area = Rect {
-        x: popup_x,
-        y: popup_y,
-        width: msg_width,
-        height: 3,
-    };
-
-    frame.render_widget(Clear, popup_area);
-
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(color));
-
-    let paragraph = Paragraph::new(Line::from(Span::styled(
-        message,
-        Style::default().fg(color),
-    )))
-    .block(block)
-    .alignment(Alignment::Center);
-
-    frame.render_widget(paragraph, popup_area);
+    render_result_toast(frame, area, message, color);
 }
 
 /// Render preset save popup (text input for preset name)

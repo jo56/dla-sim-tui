@@ -137,44 +137,21 @@ struct Args {
     theme: String,
 }
 
+/// Parse with fallback to default on error
 fn parse_neighborhood(s: &str) -> NeighborhoodType {
-    match s.to_lowercase().as_str() {
-        "vonneumann" | "von-neumann" | "vn" | "4" => NeighborhoodType::VonNeumann,
-        "extended" | "ext" | "24" => NeighborhoodType::Extended,
-        _ => NeighborhoodType::Moore,
-    }
+    s.parse().unwrap_or(NeighborhoodType::Moore)
 }
 
 fn parse_spawn_mode(s: &str) -> SpawnMode {
-    match s.to_lowercase().as_str() {
-        "edges" | "edge" => SpawnMode::Edges,
-        "corners" | "corner" => SpawnMode::Corners,
-        "random" | "rand" => SpawnMode::Random,
-        "top" => SpawnMode::Top,
-        "bottom" => SpawnMode::Bottom,
-        "left" => SpawnMode::Left,
-        "right" => SpawnMode::Right,
-        _ => SpawnMode::Circle,
-    }
+    s.parse().unwrap_or(SpawnMode::Circle)
 }
 
 fn parse_boundary(s: &str) -> BoundaryBehavior {
-    match s.to_lowercase().as_str() {
-        "wrap" | "toroidal" => BoundaryBehavior::Wrap,
-        "bounce" | "reflect" => BoundaryBehavior::Bounce,
-        "stick" => BoundaryBehavior::Stick,
-        "absorb" | "respawn" => BoundaryBehavior::Absorb,
-        _ => BoundaryBehavior::Clamp,
-    }
+    s.parse().unwrap_or(BoundaryBehavior::Clamp)
 }
 
 fn parse_color_mode(s: &str) -> ColorMode {
-    match s.to_lowercase().as_str() {
-        "distance" | "dist" => ColorMode::Distance,
-        "density" | "dens" => ColorMode::Density,
-        "direction" | "dir" => ColorMode::Direction,
-        _ => ColorMode::Age,
-    }
+    s.parse().unwrap_or(ColorMode::Age)
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
