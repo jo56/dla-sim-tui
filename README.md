@@ -1,9 +1,7 @@
 # DLA Sim TUI
 
   <div align="center">
-          <img src="assets/sunset-preview-2.png" alt="sunset theme preview">
-      <br>
-          <i>Example run with sunset theme</i>
+          <img src="assets/frost-preview-4.png" alt="frost theme preview">
     <br>
   </div>
 
@@ -20,7 +18,7 @@ A terminal-based Diffusion-Limited Aggregation (DLA) simulation using high-resol
 cargo install --git https://github.com/jo56/dla-sim-tui
 
 # Install a specific release
-cargo install --git https://github.com/jo56/dla-sim-tui --tag v0.0.1
+cargo install --git https://github.com/jo56/dla-sim-tui --tag v0.1.0
 ```
 
 After installation, run directly:
